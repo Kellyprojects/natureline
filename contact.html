@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Natureline | WhatsApp, Email, Call & More</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="top-banner">Natureline Healthcare Services • NAFDAC Approved • Multi-channel contact options</div>
+
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <svg class="brand-icon" viewBox="0 0 100 100" width="32" height="32">
+                    <path d="M35 50 Q25 40 25 25 Q25 15 35 10 Q40 30 45 50 Q40 70 35 90 Q25 85 25 75 Q25 60 35 50" fill="#0D7A39" />
+                    <path d="M65 50 Q75 40 75 25 Q75 15 65 10 Q60 30 55 50 Q60 70 65 90 Q75 85 75 75 Q75 60 65 50" fill="#00FF00" />
+                </svg>
+                <div class="brand-text">
+                    <strong>Natural<span class="leaf-i">i</span>ne</strong>
+                    <span>Healthcare Services</span>
+                </div>
+            </a>
+            <button class="menu-toggle" aria-label="Open menu">☰</button>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="treatments.html">Treatments</a>
+                <a href="team.html">Team</a>
+                <a href="contact.html" class="active">Contact</a>
+            </div>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="treatments.html">Treatments</a>
+            <a href="team.html">Team</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div>
+                <div class="hero-badge">📞 Contact us your preferred way</div>
+                <h1 id="contact-page-title">Reach our team through WhatsApp, email, call, or video consultation</h1>
+                <p id="contact-page-text">We made contact easy with multiple options so every visitor can choose the path that feels most natural and convenient.</p>
+            </div>
+            <div class="hero-card">
+                <img id="contact-page-image" src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80" alt="Communication support desk">
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <span class="tag green">WhatsApp</span>
+                    <h3>Chat instantly</h3>
+                    <p>Start a conversation for quick answers, booking support, or general inquiries.</p>
+                    <a href="https://wa.me/2348102131784" target="_blank">Open WhatsApp</a>
+                </div>
+                <div class="contact-card">
+                    <span class="tag coral">Email</span>
+                    <h3>Send a message</h3>
+                    <p>Use email if you prefer a written record or want to share detailed questions.</p>
+                    <a href="mailto:williamsadetunji63@gmail.com">williamsadetunji63@gmail.com</a>
+                </div>
+                <div class="contact-card">
+                    <span class="tag purple">Phone</span>
+                    <h3>Call the care team</h3>
+                    <p>Speak to a real person for consultation support and planning.</p>
+                    <a href="tel:+2348102131784">+234 810 213 1784</a>
+                </div>
+                <div class="contact-card">
+                    <span class="tag green">Video consult</span>
+                    <h3>Book a live meeting</h3>
+                    <p>Schedule a secure video consult for a more personal, guided support experience.</p>
+                    <a href="https://meet.google.com" target="_blank">Book via video link</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="quote-box">
+                <strong>Visit or hang out with us</strong>
+                <p>You can also request a visit, a meeting, or a consultation session and our team will help you choose the most convenient option.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div>
+                <strong>Natureline Healthcare Services</strong>
+                <p>Clinical support. Multiple contact channels. Patient-centered care.</p>
+            </div>
+            <div>
+                <a href="index.html">Home</a> • <a href="about.html">About</a> • <a href="team.html">Team</a>
+            </div>
+        </div>
+    </footer>
+
+    <button id="chat-toggle" class="chat-toggle">💬 Chat now</button>
+    <div id="chat-panel" class="chat-panel">
+        <div class="chat-header">
+            <strong>Natureline Assistant</strong>
+            <div>Helpful, quick answers</div>
+        </div>
+        <div id="chat-messages" class="chat-body"></div>
+        <div class="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask about contact options">
+            <button id="chat-send">Send</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/security.js"></script>
+</body>
+</html>

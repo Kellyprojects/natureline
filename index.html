@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natureline Healthcare Services | Modern Wellness, Multi-Page Experience</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+<body>
+    <div class="top-banner">Natureline Healthcare Services • NAFDAC Approved • Corporate Affairs Commission Registered</div>
+
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="brand">
+                <svg class="brand-icon" viewBox="0 0 100 100" width="32" height="32">
+                    <path d="M35 50 Q25 40 25 25 Q25 15 35 10 Q40 30 45 50 Q40 70 35 90 Q25 85 25 75 Q25 60 35 50" fill="#0D7A39" />
+                    <path d="M65 50 Q75 40 75 25 Q75 15 65 10 Q60 30 55 50 Q60 70 65 90 Q75 85 75 75 Q75 60 65 50" fill="#00FF00" />
+                </svg>
+                <div class="brand-text">
+                    <strong>Natural<span class="leaf-i">i</span>ne</strong>
+                    <span>Healthcare Services</span>
+                </div>
+            </a>
+            <button class="menu-toggle" aria-label="Open menu">☰</button>
+            <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="about.html">About</a>
+                <a href="treatments.html">Treatments</a>
+                <a href="team.html">Team</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="treatments.html">Treatments</a>
+            <a href="team.html">Team</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div>
+                <div class="hero-badge">🌿 Trusted, colorful, and beautifully guided care</div>
+                <h1 id="pub-hero-title">An alternative therapy for fibroid removal without surgery</h1>
+                <p id="pub-hero-desc">Natureline pairs modern wellness support with compassionate guidance, offering a clear path for clients seeking non-surgical options and a calm, reassuring experience.</p>
+                <div class="hero-actions">
+                    <a href="order.html" class="btn-primary">Order now</a>
+                    <a href="contact.html" class="btn-secondary">Book a consultation</a>
+                </div>
+            </div>
+            <div class="hero-card">
+                <img id="pub-hero-img" src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80" alt="Care team supporting a patient">
+            </div>
+        </section>
+
+        <section class="info-strip">
+            <div class="info-card">
+                <strong>NAFDAC Approved</strong>
+                <span>Certified for non-surgical fibroid management and uterine health support.</span>
+            </div>
+            <div class="info-card">
+                <strong>Clinical Consultation</strong>
+                <span>Connect with our care team via WhatsApp, email, phone, or video consultation.</span>
+            </div>
+            <div class="info-card">
+                <strong>Dedicated Support</strong>
+                <span>Individual patient guidance and follow-up care throughout the treatment pathway.</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <div>
+                    <h2>Why choose Natureline for fibroid support</h2>
+                    <p>We provide a clear, evidence-informed pathway for women seeking non-surgical fibroid management with clinical oversight and compassionate care.</p>
+                </div>
+            </div>
+            <div class="grid-3">
+                <div class="feature-card">
+                    <span class="tag green">Clinical approach</span>
+                    <h3>Individualized assessment</h3>
+                    <p>Each client receives a thorough evaluation to determine the most suitable non-surgical treatment approach for their fibroid presentation.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="tag coral">Evidence-based</span>
+                    <h3>Proven formulation</h3>
+                    <p>Our treatment utilizes botanical compounds specifically designed to support fibroid reduction and restore uterine health naturally.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="tag purple">Continuous support</span>
+                    <h3>Ongoing monitoring</h3>
+                    <p>Regular follow-up and reassessment ensure clients experience optimal results and feel supported throughout their care journey.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="grid-2">
+                <div class="card">
+                    <img id="home-doctor-image" src="images/dr-williams.jpg" alt="Dr. Williams Adetunji">
+                    <h3 id="home-doctor-title">Meet the doctor</h3>
+                    <p id="home-doctor-text">Dr. Adetunji offers deep experience and a thoughtful, personalized approach to reproductive wellness support.</p>
+                </div>
+                <div class="card">
+                    <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=900&q=80" alt="Clinical consultation space">
+                    <h3>Non-surgical fibroid treatment</h3>
+                    <p id="pub-about-text">Natureline offers a clinically guided, non-invasive approach to fibroid management. Our treatment protocol is designed to address symptomatic fibroids through botanical formulation, providing women with an alternative to surgery while maintaining regular clinical monitoring.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <div>
+                    <h2>Client stories and trust markers</h2>
+                    <p>Realistic, reassuring stories with a simple and polished presentation for visitors.</p>
+                </div>
+                <button onclick="openFeedbackModal()" class="btn-primary">Share a case note</button>
+            </div>
+            <div id="pub-feedback-container" class="grid-2"></div>
+        </section>
+
+        <section class="cta-banner">
+            <div class="card">
+                <h3>Ready to begin your consultation?</h3>
+                <p>Choose WhatsApp, email, or a call-back request and our team will guide you through the easiest next step.</p>
+                <div class="hero-actions" style="margin-top:1rem;">
+                    <a href="contact.html" class="btn-primary">Contact us now</a>
+                    <a href="team.html" class="btn-secondary">Meet the team</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div>
+                <strong>Natureline Healthcare Services</strong>
+                <p>Non-surgical fibroid treatment. Clinical oversight. Patient support.</p>
+            </div>
+            <div>
+                <a href="about.html">About</a> • <a href="treatments.html">Treatments</a> • <a href="contact.html">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <button id="chat-toggle" class="chat-toggle">💬 Chat now</button>
+    <div id="chat-panel" class="chat-panel">
+        <div class="chat-header">
+            <strong>Natureline Assistant</strong>
+            <div>Helpful, quick answers</div>
+        </div>
+        <div id="chat-messages" class="chat-body"></div>
+        <div class="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask about treatments or contact options">
+            <button id="chat-send">Send</button>
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-card">
+            <h3>Share a client story</h3>
+            <input id="fb-client-name" type="text" placeholder="Client name">
+            <textarea id="fb-text" rows="4" placeholder="Share a brief note"></textarea>
+            <input id="fb-before-img" type="text" placeholder="Before image URL">
+            <input id="fb-after-img" type="text" placeholder="After image URL">
+            <div class="hero-actions">
+                <button onclick="submitClientFeedback()" class="btn-primary">Save note</button>
+                <button onclick="closeFeedbackModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/security.js"></script>
+</body>
+</html>

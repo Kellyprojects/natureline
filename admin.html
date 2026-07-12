@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natureline Systems — Management Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background:#f8fafc;">
+    <div class="admin-shell">
+        <div id="login-container" class="admin-card" style="max-width:480px; margin:2rem auto;">
+            <h2 style="font-size:1.4rem; font-weight:800; color:#0D7A39; margin-bottom:0.5rem;">Admin Management Panel</h2>
+            <p style="color:#64748b; margin-bottom:1rem;">Use the login below to access the content management tools.</p>
+            <div id="login-error" class="hidden" style="padding:0.8rem; border-radius:14px; background:#fef2f2; color:#b91c1c; margin-bottom:0.8rem;">
+                Incorrect parameters. Please reauthenticate.
+            </div>
+            <div class="admin-form-grid">
+                <input type="text" id="admin-user" placeholder="Username">
+                <input type="password" id="admin-pass" placeholder="Password">
+                <button onclick="processLogin()" class="btn-primary">Sign In</button>
+                <a href="index.html" style="text-align:center; color:#64748b; font-size:0.9rem;">Return Home</a>
+            </div>
+        </div>
+
+        <main id="dashboard-container" class="hidden">
+            <div class="admin-card" style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <h1 style="font-size:1.5rem; font-weight:800; color:#0D7A39; margin:0;">Natureline CMS Workspace</h1>
+                <button onclick="logoutAdmin()" class="btn-secondary">Sign Out</button>
+            </div>
+
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3 style="margin-top:0;">Editable content</h3>
+                    <div class="admin-form-grid">
+                        <strong>Homepage</strong>
+                        <textarea id="edit-hero-title" rows="2" placeholder="Hero Headline"></textarea>
+                        <textarea id="edit-hero-desc" rows="3" placeholder="Hero Subtext"></textarea>
+                        <input type="text" id="edit-hero-img" placeholder="Hero Image URL">
+                        <textarea id="edit-about-text" rows="4" placeholder="About / Home Summary"></textarea>
+                        <input type="text" id="edit-home-doctor-title" placeholder="Doctor Section Title">
+                        <textarea id="edit-home-doctor-text" rows="3" placeholder="Doctor Section Text"></textarea>
+                        <input type="text" id="edit-home-doctor-image" placeholder="Doctor Section Image URL">
+                        <strong>About Page</strong>
+                        <input type="text" id="edit-about-page-title" placeholder="About Page Title">
+                        <textarea id="edit-about-page-text" rows="3" placeholder="About Page Text"></textarea>
+                        <input type="text" id="edit-about-page-image" placeholder="About Page Image URL">
+                        <strong>Team Page</strong>
+                        <input type="text" id="edit-team-page-title" placeholder="Team Page Title">
+                        <textarea id="edit-team-page-text" rows="3" placeholder="Team Page Text"></textarea>
+                        <input type="text" id="edit-team-page-image" placeholder="Team Page Image URL">
+                        <strong>Contact Page</strong>
+                        <input type="text" id="edit-contact-page-title" placeholder="Contact Page Title">
+                        <textarea id="edit-contact-page-text" rows="3" placeholder="Contact Page Text"></textarea>
+                        <input type="text" id="edit-contact-page-image" placeholder="Contact Page Image URL">
+                        <strong>Order Page</strong>
+                        <input type="text" id="edit-order-page-title" placeholder="Order Page Title">
+                        <textarea id="edit-order-page-desc" rows="3" placeholder="Order Page Description"></textarea>
+                        <input type="text" id="edit-order-page-price" placeholder="Order Page Price Text">
+                        <textarea id="edit-order-page-note" rows="3" placeholder="Order Page Note"></textarea>
+                        <button onclick="savePageContent()" class="btn-primary">Save content</button>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h3 style="margin-top:0;">Patient case queue</h3>
+                    <div id="admin-feedback-queue"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script src="js/security.js"></script>
+</body>
+</html>
