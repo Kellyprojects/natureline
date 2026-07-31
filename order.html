@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="images/images/fav-icons.png">
+    <link rel="apple-touch-icon" href="images/images/logo.jpeg">
     <title>Order Now | Natureline Healthcare Services</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -10,35 +12,54 @@
 <body>
     <div class="top-banner">Natureline Healthcare Services • NAFDAC Approved • Secure order page</div>
 
-    <nav class="site-nav">
-        <div class="nav-inner">
-            <a href="index.html" class="brand">
-                <svg class="brand-icon" viewBox="0 0 100 100" width="32" height="32">
-                    <path d="M35 50 Q25 40 25 25 Q25 15 35 10 Q40 30 45 50 Q40 70 35 90 Q25 85 25 75 Q25 60 35 50" fill="#0D7A39" />
-                    <path d="M65 50 Q75 40 75 25 Q75 15 65 10 Q60 30 55 50 Q60 70 65 90 Q75 85 75 75 Q75 60 65 50" fill="#00FF00" />
-                </svg>
-                <div class="brand-text">
-                    <strong>Natural<span class="leaf-i">i</span>ne</strong>
-                    <span>Healthcare Services</span>
-                </div>
-            </a>
-            <button class="menu-toggle" aria-label="Open menu">☰</button>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="about.html">About</a>
-                <a href="treatments.html">Treatments</a>
-                <a href="team.html">Team</a>
-                <a href="contact.html">Contact</a>
-            </div>
+
+
+
+
+
+<header>
+    <div class="nav-inner">
+
+        <a href="index.html" class="brand">
+            <img src="images/images/logo.jpeg" alt="Natureline Healthcare Services">
+        </a>
+
+      <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn">Order Now</a>
+</div>
+
+
+
+
+        <div class="menu-toggle">
+            ☰
         </div>
-        <div class="mobile-menu">
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="treatments.html">Treatments</a>
-            <a href="team.html">Team</a>
-            <a href="contact.html">Contact</a>
-        </div>
-    </nav>
+
+    </div>
+
+
+
+<div class="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn-mobile">Order Now</a>
+</div>
+
+
+    </div>
+</header>
+
+
+
+
 
     <main>
         <section class="hero">
@@ -53,14 +74,33 @@
             </div>
             <div class="card">
                 <h3>Consultation intake form</h3>
+                
                 <label class="field-label" for="order-name">Full name</label>
                 <input id="order-name" type="text" placeholder="Your full name">
+                
                 <label class="field-label" for="order-email">Email address</label>
                 <input id="order-email" type="email" placeholder="you@example.com">
+                
                 <label class="field-label" for="order-phone">Phone number</label>
                 <input id="order-phone" type="tel" placeholder="080...">
+
+                <label class="field-label" for="order-delivery-address">Delivery address</label>
+                <textarea id="order-delivery-address" rows="3" placeholder="Enter your delivery address or pickup details"></textarea>
+
+                <!-- NEW: Dynamic Product Selector Dropdown -->
+                <label class="field-label" for="order-product-select">Select treatment option</label>
+                <select id="order-product-select" onchange="updateSelectedPrice()" style="width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+                    <!-- Dynamically populated by JS -->
+                </select>
+
+                <!-- NEW: Live Selected Price Indicator -->
+                <div id="dynamic-price-display" style="font-weight: bold; color: #0D7A39; margin-bottom: 1rem; font-size: 1.1rem;">
+                    Total Price: Loading...
+                </div>
+                
                 <label class="field-label" for="order-notes">Medical notes (optional)</label>
                 <textarea id="order-notes" rows="4" placeholder="Share any details about your fibroid symptoms or medical history the team should know"></textarea>
+                
                 <button onclick="payWithPaystack()" class="btn-primary" style="width:100%; margin-top:0.8rem;">Proceed to payment</button>
             </div>
         </section>

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="images/images/fav-icons.png">
+    <link rel="apple-touch-icon" href="images/images/logo.jpeg">
     <title>Team | Natureline Healthcare Services</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="css/style.css">
@@ -10,64 +12,87 @@
 <body>
     <div class="top-banner">Natureline Healthcare Services • NAFDAC Approved • Friendly and polished digital experience</div>
 
-    <nav class="site-nav">
-        <div class="nav-inner">
-            <a href="index.html" class="brand">
-                <svg class="brand-icon" viewBox="0 0 100 100" width="32" height="32">
-                    <path d="M35 50 Q25 40 25 25 Q25 15 35 10 Q40 30 45 50 Q40 70 35 90 Q25 85 25 75 Q25 60 35 50" fill="#0D7A39" />
-                    <path d="M65 50 Q75 40 75 25 Q75 15 65 10 Q60 30 55 50 Q60 70 65 90 Q75 85 75 75 Q75 60 65 50" fill="#00FF00" />
-                </svg>
-                <div class="brand-text">
-                    <strong>Natural<span class="leaf-i">i</span>ne</strong>
-                    <span>Healthcare Services</span>
-                </div>
-            </a>
-            <button class="menu-toggle" aria-label="Open menu">☰</button>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="about.html">About</a>
-                <a href="treatments.html">Treatments</a>
-                <a href="team.html" class="active">Team</a>
-                <a href="contact.html">Contact</a>
-            </div>
+
+
+
+
+
+<header>
+    <div class="nav-inner">
+
+        <a href="index.html" class="brand">
+            <img src="images/images/logo.jpeg" alt="Natureline Healthcare Services">
+        </a>
+
+       <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn">Order Now</a>
+</div>
+
+
+
+
+        <div class="menu-toggle">
+            ☰
         </div>
-        <div class="mobile-menu">
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="treatments.html">Treatments</a>
-            <a href="team.html">Team</a>
-            <a href="contact.html">Contact</a>
-        </div>
-    </nav>
+
+    </div>
+
+
+
+<div class="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn-mobile">Order Now</a>
+</div>
+
+
+    </div>
+</header>
+
+
+
+
 
     <main>
         <section class="hero">
             <div>
                 <div class="hero-badge">👩‍⚕️ Meet your care team</div>
                 <h1 id="team-page-title">Meet the doctor and the people behind the experience</h1>
-                <p id="team-page-text">Natureline is supported by a warm and capable team that brings clarity, care, and confidence to every interaction.</p>
+                <p id="team-page-text">Natureline  is supported by a warm and capable team that brings clarity, care, and confidence to every interaction.</p>
                 <div class="hero-actions">
                     <a href="contact.html" class="btn-primary">Book a consultation</a>
                     <a href="about.html" class="btn-secondary">Learn more</a>
                 </div>
             </div>
             <div class="hero-card">
-                <img id="team-page-image" src="images/dr-williams.jpg" alt="Dr. Williams Adetunji">
+                <img id="team" src="images/images/image.png"alt="Natureline support team">
             </div>
         </section>
 
         <section class="section">
-            <div class="grid-2">
-                <div class="team-card">
-                    <img src="images/dr-williams.jpg" alt="Dr. Williams Adetunji">
-                    <h3>Dr. Williams Adetunji</h3>
-                    <p>Medical lead and clinical guide focused on compassionate, thoughtful care and clear patient support.</p>
+            <div class="team-list">
+                <div class="team-card landscape">
+                    <img src="images/images/Dr-Williams-Natureline.jpg" alt="Dr. Williams Adetunji">
+                    <div class="team-card-body">
+                        <h3>Dr. Williams Adetunji</h3>
+                        <p>Medical lead and clinical guide focused on compassionate, thoughtful care and clear patient support.</p>
+                    </div>
                 </div>
-                <div class="team-card">
-                    <img src="images/dr-williams.jpg" alt="Natureline support team">
-                    <h3>Patient support team</h3>
-                    <p>Our support specialists coordinate educational guidance, consultations, and follow-up communication with warmth and clarity.</p>
-                    <span class="team-card-brand">Natureline</span>
+                <div class="team-card landscape">
+                    <img src="images/images/team-leader.png" alt="Natureline support team">
+                    <div class="team-card-body">
+                        <h3>Patient support team Leader</h3>
+                        <p>Our support specialists coordinate educational guidance, consultations, and follow-up communication with warmth and clarity.</p>
+                        <span class="team-card-brand"></span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -88,7 +113,7 @@
     <button id="chat-toggle" class="chat-toggle">💬 Chat now</button>
     <div id="chat-panel" class="chat-panel">
         <div class="chat-header">
-            <strong>Natureline Assistant</strong>
+            <strong>Natureline Healthcare Assistant</strong>
             <div>Helpful, quick answers</div>
         </div>
         <div id="chat-messages" class="chat-body"></div>

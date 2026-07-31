@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="images/images/fav-icons.png">
+    <link rel="apple-touch-icon" href="images/images/logo.jpeg">
     <title>Natureline Healthcare Services | Modern Wellness, Multi-Page Experience</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="css/style.css">
@@ -11,42 +13,58 @@
 <body>
     <div class="top-banner">Natureline Healthcare Services • NAFDAC Approved • Corporate Affairs Commission Registered</div>
 
-    <nav class="site-nav">
-        <div class="nav-inner">
-            <a href="index.html" class="brand">
-                <svg class="brand-icon" viewBox="0 0 100 100" width="32" height="32">
-                    <path d="M35 50 Q25 40 25 25 Q25 15 35 10 Q40 30 45 50 Q40 70 35 90 Q25 85 25 75 Q25 60 35 50" fill="#0D7A39" />
-                    <path d="M65 50 Q75 40 75 25 Q75 15 65 10 Q60 30 55 50 Q60 70 65 90 Q75 85 75 75 Q75 60 65 50" fill="#00FF00" />
-                </svg>
-                <div class="brand-text">
-                    <strong>Natural<span class="leaf-i">i</span>ne</strong>
-                    <span>Healthcare Services</span>
-                </div>
-            </a>
-            <button class="menu-toggle" aria-label="Open menu">☰</button>
-            <div class="nav-links">
-                <a href="index.html" class="active">Home</a>
-                <a href="about.html">About</a>
-                <a href="treatments.html">Treatments</a>
-                <a href="team.html">Team</a>
-                <a href="contact.html">Contact</a>
-            </div>
+
+<header>
+    <div class="nav-inner">
+
+        <a href="index.html" class="brand">
+            <img src="images/images/logo.jpeg" alt="Natureline Healthcare Services">
+        </a>
+
+       <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn">Order Now</a>
+</div>
+
+
+
+
+        <div class="menu-toggle">
+            ☰
         </div>
-        <div class="mobile-menu">
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="treatments.html">Treatments</a>
-            <a href="team.html">Team</a>
-            <a href="contact.html">Contact</a>
-        </div>
-    </nav>
+
+    </div>
+
+
+
+<div class="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="treatments.html">Treatments</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html">Contact</a>
+    <a href="order.html" class="order-btn-mobile">Order Now</a>
+</div>
+
+
+    </div>
+</header>
+
+
+
+
+
 
     <main>
         <section class="hero">
             <div>
                 <div class="hero-badge">🌿 Trusted, colorful, and beautifully guided care</div>
                 <h1 id="pub-hero-title">An alternative therapy for fibroid removal without surgery</h1>
-                <p id="pub-hero-desc">Natureline pairs modern wellness support with compassionate guidance, offering a clear path for clients seeking non-surgical options and a calm, reassuring experience.</p>
+                <p id="pub-hero-desc">Natureline Healthcare pairs modern wellness support with compassionate guidance, offering a clear path for clients seeking non-surgical options and a calm, reassuring experience.</p>
                 <div class="hero-actions">
                     <a href="order.html" class="btn-primary">Order now</a>
                     <a href="contact.html" class="btn-secondary">Book a consultation</a>
@@ -99,18 +117,27 @@
         </section>
 
         <section class="section">
-            <div class="grid-2">
-                <div class="card">
-                    <img id="home-doctor-image" src="images/dr-williams.jpg" alt="Dr. Williams Adetunji">
-                    <h3 id="home-doctor-title">Meet the doctor</h3>
-                    <p id="home-doctor-text">Dr. Adetunji offers deep experience and a thoughtful, personalized approach to reproductive wellness support.</p>
+           
+
+
+            <div class="team-card landscape">
+                    <img src="images/images/Dr-Williams-Natureline.jpg" alt="Natureline support team">
+                    <div class="team-card-body">
+                        <h3>Meet the Doctor</h3>
+                        <p>Dr. Williams Adetunji,a board-experienced medical professional specializing in non-surgical fibroid management and reproductive health support with a patient-centered clinical approach.</p>
+                        <span class="team-card-brand"></span>
+            
+                    </div>
                 </div>
-                <div class="card">
+
+         <div class="team-card landscape">
                     <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=900&q=80" alt="Clinical consultation space">
+                    <div class="team-card-body">
                     <h3>Non-surgical fibroid treatment</h3>
-                    <p id="pub-about-text">Natureline offers a clinically guided, non-invasive approach to fibroid management. Our treatment protocol is designed to address symptomatic fibroids through botanical formulation, providing women with an alternative to surgery while maintaining regular clinical monitoring.</p>
-                </div>
-            </div>
+                    <p>The group invites all women with issues of fibroids and other reproductive system challenges to embrace Tumorex vaginal insert tablet which is the safest and most authentic antidote to fibroids and other benign growths. Advertisements and referrals are strictly forbidden on our official delivery groups to ensure consumer protection.</p>
+                  <span class="team-card-brand"></span>
+                        
+             </div>
         </section>
 
         <section class="section">
@@ -163,13 +190,22 @@
 
     <div id="feedback-modal" class="modal hidden">
         <div class="modal-card">
-            <h3>Share a client story</h3>
+            <h3>Share your result story</h3>
+            <p style="color:#64748b;font-size:0.9rem;margin:0 0 0.75rem;">Your testimony is reviewed by our team before it appears on the public page.</p>
+            <label class="field-label" for="fb-client-name">Your name</label>
             <input id="fb-client-name" type="text" placeholder="Client name">
-            <textarea id="fb-text" rows="4" placeholder="Share a brief note"></textarea>
-            <input id="fb-before-img" type="text" placeholder="Before image URL">
-            <input id="fb-after-img" type="text" placeholder="After image URL">
-            <div class="hero-actions">
-                <button onclick="submitClientFeedback()" class="btn-primary">Save note</button>
+            <label class="field-label" for="fb-client-email">Email (optional)</label>
+            <input id="fb-client-email" type="email" placeholder="you@example.com">
+            <label class="field-label" for="fb-text">Your story / how you feel</label>
+            <textarea id="fb-text" rows="3" placeholder="Share your experience with the treatment and results"></textarea>
+            <label class="field-label" for="fb-product-experience">How do you feel about the product?</label>
+            <textarea id="fb-product-experience" rows="2" placeholder="Describe the product results and how it helped you"></textarea>
+            <label class="field-label" for="fb-company-experience">How do you feel about Natureline?</label>
+            <textarea id="fb-company-experience" rows="2" placeholder="Share your experience with our team and support"></textarea>
+            <label class="field-label" for="fb-result-image">Result image (optional)</label>
+            <input id="fb-result-image" type="file" accept="image/*">
+            <div class="hero-actions" style="margin-top:0.75rem;">
+                <button onclick="submitClientFeedback()" class="btn-primary">Submit for review</button>
                 <button onclick="closeFeedbackModal()" class="btn-secondary">Cancel</button>
             </div>
         </div>

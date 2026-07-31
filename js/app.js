@@ -1,3 +1,6 @@
+// ==========================================
+// 1. DEFAULT CONTENT & STATE MANAGEMENT
+// ==========================================
 const defaultContent = {
     heroTitle: 'Non-surgical fibroid treatment with clinical oversight',
     heroDesc: 'Natureline provides evidence-informed botanical therapy combined with professional monitoring, offering women a safe alternative to surgery for fibroid management.',
@@ -21,6 +24,14 @@ const defaultContent = {
     orderPageNote: 'After payment confirmation, our clinical team will contact you within 24 hours to schedule your initial assessment and discuss your personalized treatment plan.'
 };
 
+// Default treatment catalog options
+const defaultProducts = [
+    { id: "p1", name: "Eldora Tumorex™ Vaginal Insert Pack", price: 35000 },
+    { id: "p2", name: "Premium Pelvic Flush Herbal Remedy", price: 25000 },
+    { id: "p3", name: "Fibroid Cleansing Tonic & Detox Solution", price: 18500 }
+];
+
+// Initialize Storage Sandbox
 if (!localStorage.getItem('natureline_content')) {
     localStorage.setItem('natureline_content', JSON.stringify(defaultContent));
 } else {
@@ -43,12 +54,44 @@ if (!localStorage.getItem('natureline_content')) {
         localStorage.setItem('natureline_content', JSON.stringify({ ...defaultContent, ...storedContent }));
     }
 }
+
 if (!localStorage.getItem('natureline_feedback')) {
     localStorage.setItem('natureline_feedback', JSON.stringify([]));
 }
 
-function renderPublicPage() {
-    const content = JSON.parse(localStorage.getItem('natureline_content')) || defaultContent;
+if (!localStorage.getItem('natureline_products')) {
+    localStorage.setItem('natureline_products', JSON.stringify(defaultProducts));
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ==========================================
+// 2. PUBLIC VIEW RENDERING
+// ==========================================
+// UPGRADED: Fetches your webpage content live from Firebase instead of local browser storage
+async function renderPublicPage() {
+    let content = defaultContent;
+
+    try {
+        const response = await fetch('/api/get-content');
+        const dbContent = await response.json();
+        // If the database has content, merge it with defaults so nothing breaks
+        if (dbContent && Object.keys(dbContent).length > 0) {
+            content = { ...defaultContent, ...dbContent };
+        }
+    } catch (error) {
+        console.error("Critical database fetch failed, running on fallback defaults:", error);
+        // Fallback to localStorage if the server is offline during development
+        content = JSON.parse(localStorage.getItem('natureline_content')) || defaultContent;
+    }
+
     const feedbackList = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
 
     const heroTitle = document.getElementById('pub-hero-title');
@@ -95,91 +138,307 @@ function renderPublicPage() {
 
     const container = document.getElementById('pub-feedback-container');
     if (!container) return;
+    
+    try {
+        const response = await fetch('/api/get-feedbacks?status=approved');
+        const result = await response.json();
+        const feedbacks = Array.isArray(result.feedbacks) ? result.feedbacks : [];
 
-    container.innerHTML = '';
-    const approved = feedbackList.filter((item) => item.status === 'approved');
+        if (!feedbacks.length) {
+            container.innerHTML = '<p style="color:#64748b;">No approved case notes yet.</p>';
+            return;
+        }
 
-    if (approved.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 italic">No case verification histories have been published yet.</p>';
+        container.innerHTML = feedbacks.map((item) => `
+            <div class="feature-card" style="border:1px solid #e2e8f0;">
+                <strong>${escapeHtml(item.name || 'Client')}</strong>
+                <p style="margin:0.4rem 0 0;color:#475569;">${escapeHtml(item.message || '')}</p>
+                ${item.productExperience ? `<p style="margin:0.4rem 0 0;font-size:0.9rem;"><em>Product:</em> ${escapeHtml(item.productExperience)}</p>` : ''}
+                ${item.companyExperience ? `<p style="margin:0.3rem 0 0;font-size:0.9rem;"><em>Company:</em> ${escapeHtml(item.companyExperience)}</p>` : ''}
+            </div>
+        `).join('');
+    } catch (error) {
+        const fallbackFeedbacks = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
+
+        if (!fallbackFeedbacks.length) {
+            container.innerHTML = '<p style="color:#64748b;">No case notes available right now.</p>';
+            return;
+        }
+
+        container.innerHTML = fallbackFeedbacks.map((item) => `
+            <div class="feature-card" style="border:1px solid #e2e8f0;">
+                <strong>${escapeHtml(item.name || 'Client')}</strong>
+                <p style="margin:0.4rem 0 0;color:#475569;">${escapeHtml(item.message || '')}</p>
+            </div>
+        `).join('');
+    }
+}
+
+// ==========================================
+// 3. CATALOG INTERFACE CODES
+// ==========================================
+function populateProducts() {
+    const selectDropdown = document.getElementById('order-product-select');
+    
+    if (!selectDropdown) return;
+
+    const renderOptions = (products) => {
+        const safeProducts = Array.isArray(products) && products.length ? products : defaultProducts;
+
+        selectDropdown.innerHTML = '';
+
+        safeProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} — ₦${Number(product.price).toLocaleString()}`;
+            option.setAttribute('data-price', product.price);
+            selectDropdown.appendChild(option);
+        });
+
+        updateSelectedPrice();
+    };
+
+    fetch('/api/products')
+        .then((response) => response.json())
+        .then((result) => renderOptions(result.products || []))
+        .catch(() => {
+            const products = JSON.parse(localStorage.getItem('natureline_products')) || defaultProducts;
+            renderOptions(products);
+        });
+}
+
+function updateSelectedPrice() {
+    const selectDropdown = document.getElementById('order-product-select');
+    const priceDisplay = document.getElementById('dynamic-price-display');
+    const orderPagePrice = document.getElementById('order-price');
+    
+    if (!selectDropdown) return;
+    
+    const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
+    if (selectedOption) {
+        const selectedPrice = Number(selectedOption.getAttribute('data-price'));
+        const formattedPrice = `₦${selectedPrice.toLocaleString()}`;
+        
+        if (priceDisplay) priceDisplay.innerText = `Total Price: ${formattedPrice}`;
+        if (orderPagePrice) orderPagePrice.innerText = `Consultation & treatment package: ${formattedPrice}`;
+    }
+}
+
+// ==========================================
+// 4. CLIENT INTERACTIVE DIALOGS
+// ==========================================
+// UPGRADED: Transmits customer feedback data straight to Firebase collections
+async function submitCustomerFeedback(event) {
+    if (event) event.preventDefault(); // Stop standard HTML form page reloads
+
+    const nameInput = document.getElementById('feedback-name') || document.getElementById('pub-feedback-name');
+    const emailInput = document.getElementById('feedback-email') || document.getElementById('pub-feedback-email');
+    const msgInput = document.getElementById('feedback-message') || document.getElementById('pub-feedback-text');
+
+    if (!nameInput || !msgInput || !nameInput.value.trim() || !msgInput.value.trim()) {
+        alert("Name and Message fields are required.");
         return;
     }
 
-    approved.forEach((item) => {
-        container.innerHTML += `
-            <div class="card">
-                <h3>${item.name}</h3>
-                <p>"${item.text}"</p>
-                <div class="grid-2" style="margin-top:0.8rem; gap:0.65rem;">
-                    <img src="${item.beforeImg}" alt="Before image" />
-                    <img src="${item.afterImg}" alt="After image" />
-                </div>
-            </div>`;
-    });
+    const reviewPayload = {
+        name: nameInput.value.trim(),
+        email: emailInput ? emailInput.value.trim() : 'Anonymous Client',
+        rating: 5,
+        message: msgInput.value.trim()
+    };
+
+    try {
+        const response = await fetch('/api/submit-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewPayload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert("Feedback sent successfully!");
+            nameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            msgInput.value = '';
+        } else {
+            alert("Server database rejected entry: " + result.message);
+        }
+    } catch (err) {
+        console.error("Network communication fault with backend server:", err);
+        alert("Failed to submit feedback. Check that your Node backend server is running on port 5000.");
+    }
 }
+
+// Ensure the function is accessible globally by the HTML button triggers
+window.submitCustomerFeedback = submitCustomerFeedback;
 
 function openFeedbackModal() {
     const modal = document.getElementById('feedback-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
+    if (modal) modal.classList.remove('hidden');
 }
 
 function closeFeedbackModal() {
     const modal = document.getElementById('feedback-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    if (modal) modal.classList.add('hidden');
 }
 
-function submitClientFeedback() {
-    const name = document.getElementById('fb-client-name').value || 'Anonymous Client';
-    const text = document.getElementById('fb-text').value;
-    const beforeImg = document.getElementById('fb-before-img').value || 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=400&q=80';
-    const afterImg = document.getElementById('fb-after-img').value || 'https://images.unsplash.com/photo-1559757175-0214a66e1470?auto=format&fit=crop&w=400&q=80';
+async function submitClientFeedback(event) {
+    if (event) event.preventDefault();
 
-    if (!text) {
-        alert('A feedback note is required.');
+    const nameInput = document.getElementById('fb-client-name');
+    const emailInput = document.getElementById('fb-client-email');
+    const messageInput = document.getElementById('fb-text');
+    const productInput = document.getElementById('fb-product-experience');
+    const companyInput = document.getElementById('fb-company-experience');
+    const imageInput = document.getElementById('fb-result-image');
+
+    const name = nameInput?.value.trim() || '';
+    const email = emailInput?.value.trim() || '';
+    const message = messageInput?.value.trim() || '';
+    const productExperience = productInput?.value.trim() || '';
+    const companyExperience = companyInput?.value.trim() || '';
+
+    if (!name || !message) {
+        alert('Please enter your name and story before submitting.');
         return;
     }
 
-    const feedbackList = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
-    feedbackList.push({ id: Date.now(), name, text, beforeImg, afterImg, status: 'pending' });
-    localStorage.setItem('natureline_feedback', JSON.stringify(feedbackList));
+    let imageUrl = '';
+    const file = imageInput?.files?.[0];
 
-    alert('Submission has been sent to the admin pipeline for review.');
-    closeFeedbackModal();
+    try {
+        if (file) {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const uploadResponse = await fetch('/api/upload-image', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+                imageUrl = uploadResult.url;
+            }
+        }
+
+        const response = await fetch('/api/submit-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                email,
+                message,
+                rating: 5,
+                productExperience,
+                companyExperience,
+                imageUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            alert(result.message || 'Could not submit your case note.');
+            return;
+        }
+
+        const stored = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
+        stored.unshift({
+            name,
+            email,
+            message,
+            productExperience,
+            companyExperience,
+            imageUrl,
+            status: 'pending'
+        });
+        localStorage.setItem('natureline_feedback', JSON.stringify(stored));
+
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (messageInput) messageInput.value = '';
+        if (productInput) productInput.value = '';
+        if (companyInput) companyInput.value = '';
+        if (imageInput) imageInput.value = '';
+
+        closeFeedbackModal();
+        alert('Thank you! Your case note has been submitted for review.');
+        renderPublicPage();
+    } catch (error) {
+        console.error('Feedback submission failed:', error);
+        alert('Could not submit your feedback right now. Please try again later.');
+    }
 }
 
+window.openFeedbackModal = openFeedbackModal;
+window.closeFeedbackModal = closeFeedbackModal;
+window.submitClientFeedback = submitClientFeedback;
+
+
+// ==========================================
+// 5. SECURE PAYSTACK GATEWAY
+// ==========================================
 function payWithPaystack() {
     const name = document.getElementById('order-name')?.value || document.getElementById('paystack-email')?.value || '';
     const email = document.getElementById('order-email')?.value || document.getElementById('paystack-email')?.value || '';
     const phone = document.getElementById('order-phone')?.value || '';
+    const deliveryAddress = document.getElementById('order-delivery-address')?.value?.trim() || document.getElementById('order-notes')?.value?.trim() || '';
     const notes = document.getElementById('order-notes')?.value || '';
+    const selectDropdown = document.getElementById('order-product-select');
+    
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email.');
         return;
     }
 
-    if (window.PaystackPop) {
-        const handler = PaystackPop.setup({
-            key: 'pk_test_YOUR_PUBLIC_KEY_HERE',
-            email,
-            amount: 35000 * 100,
-            currency: 'NGN',
-            metadata: { custom_fields: [{ display_name: 'Name', variable_name: 'name', value: name }, { display_name: 'Phone', variable_name: 'phone', value: phone }, { display_name: 'Notes', variable_name: 'notes', value: notes }] },
-            callback: function (response) {
-                alert('Payment successful! Reference: ' + response.reference);
-            },
-            onClose: function () {
-                alert('Payment window closed.');
-            }
-        });
-        handler.openIframe();
-    } else {
-        alert('Payment gateway is not available right now.');
+    // Default to base amount if no selection structure is loaded
+    let checkoutAmount = 35000;
+    let selectedProductName = "Consultation & treatment package";
+
+    if (selectDropdown && selectDropdown.selectedIndex !== -1) {
+        const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
+        checkoutAmount = Number(selectedOption.getAttribute('data-price'));
+        selectedProductName = selectedOption.textContent;
     }
+
+    if (!deliveryAddress) {
+        alert('Please add a delivery address or notes before continuing.');
+        return;
+    }
+
+    fetch('/api/initialize-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email,
+            customerName: name,
+            phoneNumber: phone,
+            deliveryAddress,
+            amount: checkoutAmount,
+            productName: selectedProductName
+        })
+    })
+        .then((response) => response.json())
+        .then((result) => {
+            const authorizationUrl = result?.data?.authorization_url;
+            if (authorizationUrl) {
+                window.location.href = authorizationUrl;
+                return;
+            }
+
+            throw new Error(result?.message || 'Payment initialization failed.');
+        })
+        .catch((error) => {
+            console.error('Backend payment init failed:', error);
+            alert('Payment setup failed. Please confirm the backend server is running and your Paystack key is configured.');
+        });
 }
 
+// ==========================================
+// 6. GLOBAL LAYOUT LOGICS (MENU/NAV)
+// ==========================================
 function initNavigation() {
     const toggle = document.querySelector('.menu-toggle');
     const mobileMenu = document.querySelector('.mobile-menu');
@@ -191,11 +450,14 @@ function initNavigation() {
     }
 }
 
+// ==========================================
+// 7. CHATBOT INTERFACE LOGIC
+// ==========================================
 function getBotReply(message) {
     const text = message.toLowerCase();
     const faqMap = [
         { pattern: ['nafdac', 'approved', 'approval'], reply: 'Yes — our fibroid treatment formulation is NAFDAC approved for non-surgical therapeutic use. All formulations meet strict safety and quality standards.' },
-        { pattern: ['price', 'cost', 'amount', 'payment', 'pay'], reply: 'Our consultation and initial treatment package is ₦35,000. This covers clinical assessment, personalized care planning, and the start of your treatment pathway.' },
+        { pattern: ['price', 'cost', 'amount', 'payment', 'pay'], reply: 'Our treatment package pricing varies depending on your selected formulation option in the order portal. Our core Eldora Tumorex™ pack is valued at ₦35,000, and alternatives are manageable from the intake checkout form dropdown.' },
         { pattern: ['doctor', 'dr', 'team', 'meet'], reply: 'Dr. Williams Adetunji leads our clinical team with expertise in non-surgical fibroid management. Our team provides personalized care and continuous monitoring throughout treatment.' },
         { pattern: ['contact', 'whatsapp', 'email', 'gmail', 'call', 'phone', 'video'], reply: 'You can contact us through WhatsApp, email, phone, or video consultation from the contact page to discuss your fibroid symptoms and treatment options.' },
         { pattern: ['fibroid', 'treatment', 'therapy', 'support'], reply: 'We provide non-surgical fibroid treatment using botanical formulation combined with clinical monitoring. Our approach is designed to reduce fibroid symptoms and improve uterine health without surgery.' },
@@ -237,6 +499,8 @@ function initChatbot() {
         }
     });
 
+    // Clear and set start notification
+    messages.innerHTML = '';
     addMessage('Hello! I can help with treatment details, contact options, doctor information, and pricing.', 'bot');
 
     const submit = () => {
@@ -257,8 +521,12 @@ function initChatbot() {
     });
 }
 
+// ==========================================
+// 8. APP BOOTSTRAP INITIALIZATION
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     renderPublicPage();
+    populateProducts(); // Loads products dynamically inside form selector context on load
     initNavigation();
     initChatbot();
 });
