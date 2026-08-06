@@ -4,32 +4,50 @@
 const defaultContent = {
     heroTitle: 'Non-surgical fibroid treatment with clinical oversight',
     heroDesc: 'Natureline provides evidence-informed botanical therapy combined with professional monitoring, offering women a safe alternative to surgery for fibroid management.',
-    heroImg: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=600&q=80',
+    heroImg: 'images/images/Dr-Williams-Natureline.jpg',
     aboutText: 'Fibroids are benign uterine tumors affecting many women. Natureline\'s non-surgical approach uses proven botanical formulation and clinical oversight to reduce symptoms and improve quality of life without hysterectomy or myomectomy.',
     homeDoctorTitle: 'Dr. Williams Adetunji',
     homeDoctorText: 'Board-experienced medical professional specializing in non-surgical fibroid management and reproductive health support with a patient-centered clinical approach.',
     homeDoctorImage: 'images/dr-williams.jpg',
     aboutPageTitle: 'Understanding Natureline\'s approach to non-surgical fibroid management',
     aboutPageText: 'Fibroids (benign uterine tumors) affect millions of women and can cause significant symptoms including heavy menstrual bleeding, pelvic pain, and urinary dysfunction. Natureline provides a clinical alternative to hysterectomy and myomectomy through evidence-informed botanical treatment combined with professional oversight and continuous patient support throughout the care pathway.',
-    aboutPageImage: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80',
+    aboutPageImage: 'images/images/fibroid-image.webp',
     teamPageTitle: 'Clinical team expertise in fibroid care',
     teamPageText: 'Our team combines medical expertise, patient advocacy, and a commitment to evidence-based non-surgical fibroid management. We work with each patient individually to ensure safe, effective treatment outcomes.',
     teamPageImage: 'images/dr-williams.jpg',
     contactPageTitle: 'Connect with our clinical team',
     contactPageText: 'Reach us through multiple channels to discuss fibroid symptoms, treatment options, and how Natureline can support your healthcare journey.',
-    contactPageImage: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80',
-    orderPageTitle: 'Begin your fibroid treatment consultation',
-    orderPageDesc: 'Complete the intake form and secure payment to schedule your personalized clinical assessment and start the Natureline non-surgical treatment pathway.',
-    orderPagePrice: 'Consultation & treatment package: ₦35,000',
-    orderPageNote: 'After payment confirmation, our clinical team will contact you within 24 hours to schedule your initial assessment and discuss your personalized treatment plan.'
+    contactPageImage: 'images/images/team-leader.png',
+    orderPageTitle: 'Choose your Eldora product order',
+    orderPageDesc: 'Select from the updated Eldora catalog, review the live price for each item, and complete checkout securely.',
+    orderPagePrice: 'Selected product price: ₦18,500',
+    orderPageNote: 'After payment confirmation, our team will process your order and contact you with delivery or pickup details.'
 };
 
 // Default treatment catalog options
 const defaultProducts = [
-    { id: "p1", name: "Eldora Tumorex™ Vaginal Insert Pack", price: 35000 },
-    { id: "p2", name: "Premium Pelvic Flush Herbal Remedy", price: 25000 },
-    { id: "p3", name: "Fibroid Cleansing Tonic & Detox Solution", price: 18500 }
+    { id: "p1", name: "Eldora Hormexol hormone booster — 250 ml", price: 18500 },
+    { id: "p2", name: "Eldora Enervate tablets — 30 tablets", price: 25000 },
+    { id: "p3", name: "Eldora Anti Festering Powder — 100 g", price: 45000 },
+    { id: "p4", name: "Eldora Herbal Tablet — 30 tablets", price: 28500 },
+    { id: "p5", name: "Eldora Herbal Mixture — 500 ml", price: 15000 },
+    { id: "p6", name: "Eldora Tumorex natural formula — 2 tablets", price: 35000 }
 ];
+
+function getCanonicalProducts() {
+    const seen = new Set();
+
+    return defaultProducts.filter((product) => {
+        const key = String(product.name || '').trim().toLowerCase();
+
+        if (!key || seen.has(key)) {
+            return false;
+        }
+
+        seen.add(key);
+        return true;
+    });
+}
 
 // Initialize Storage Sandbox
 if (!localStorage.getItem('natureline_content')) {
@@ -60,7 +78,9 @@ if (!localStorage.getItem('natureline_feedback')) {
 }
 
 if (!localStorage.getItem('natureline_products')) {
-    localStorage.setItem('natureline_products', JSON.stringify(defaultProducts));
+    localStorage.setItem('natureline_products', JSON.stringify(getCanonicalProducts()));
+} else {
+    localStorage.setItem('natureline_products', JSON.stringify(getCanonicalProducts()));
 }
 
 function escapeHtml(value) {
@@ -183,11 +203,24 @@ function populateProducts() {
     if (!selectDropdown) return;
 
     const renderOptions = (products) => {
-        const safeProducts = Array.isArray(products) && products.length ? products : defaultProducts;
+        const safeProducts = Array.isArray(products) && products.length ? products : getCanonicalProducts();
+        const uniqueProducts = [];
+        const seen = new Set();
+
+        safeProducts.forEach((product) => {
+            const key = String(product?.name || '').trim().toLowerCase();
+
+            if (!key || seen.has(key)) {
+                return;
+            }
+
+            seen.add(key);
+            uniqueProducts.push(product);
+        });
 
         selectDropdown.innerHTML = '';
 
-        safeProducts.forEach(product => {
+        uniqueProducts.forEach(product => {
             const option = document.createElement('option');
             option.value = product.id;
             option.textContent = `${product.name} — ₦${Number(product.price).toLocaleString()}`;
@@ -198,13 +231,7 @@ function populateProducts() {
         updateSelectedPrice();
     };
 
-    fetch('/api/products')
-        .then((response) => response.json())
-        .then((result) => renderOptions(result.products || []))
-        .catch(() => {
-            const products = JSON.parse(localStorage.getItem('natureline_products')) || defaultProducts;
-            renderOptions(products);
-        });
+    renderOptions(getCanonicalProducts());
 }
 
 function updateSelectedPrice() {
@@ -219,8 +246,8 @@ function updateSelectedPrice() {
         const selectedPrice = Number(selectedOption.getAttribute('data-price'));
         const formattedPrice = `₦${selectedPrice.toLocaleString()}`;
         
-        if (priceDisplay) priceDisplay.innerText = `Total Price: ${formattedPrice}`;
-        if (orderPagePrice) orderPagePrice.innerText = `Consultation & treatment package: ${formattedPrice}`;
+        if (priceDisplay) priceDisplay.innerText = `Selected product price: ${formattedPrice}`;
+        if (orderPagePrice) orderPagePrice.innerText = `Selected product price: ${formattedPrice}`;
     }
 }
 
@@ -394,8 +421,9 @@ function payWithPaystack() {
     }
 
     // Default to base amount if no selection structure is loaded
-    let checkoutAmount = 35000;
-    let selectedProductName = "Consultation & treatment package";
+    const canonicalProducts = getCanonicalProducts();
+    let checkoutAmount = canonicalProducts[0].price;
+    let selectedProductName = canonicalProducts[0].name;
 
     if (selectDropdown && selectDropdown.selectedIndex !== -1) {
         const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
@@ -457,7 +485,7 @@ function getBotReply(message) {
     const text = message.toLowerCase();
     const faqMap = [
         { pattern: ['nafdac', 'approved', 'approval'], reply: 'Yes — our fibroid treatment formulation is NAFDAC approved for non-surgical therapeutic use. All formulations meet strict safety and quality standards.' },
-        { pattern: ['price', 'cost', 'amount', 'payment', 'pay'], reply: 'Our treatment package pricing varies depending on your selected formulation option in the order portal. Our core Eldora Tumorex™ pack is valued at ₦35,000, and alternatives are manageable from the intake checkout form dropdown.' },
+        { pattern: ['price', 'cost', 'amount', 'payment', 'pay'], reply: 'Our catalog includes multiple Eldora products in the order portal, with prices ranging from ₦15,000 for the Herbal Mixture to ₦45,000 for the Anti Festering Powder.' },
         { pattern: ['doctor', 'dr', 'team', 'meet'], reply: 'Dr. Williams Adetunji leads our clinical team with expertise in non-surgical fibroid management. Our team provides personalized care and continuous monitoring throughout treatment.' },
         { pattern: ['contact', 'whatsapp', 'email', 'gmail', 'call', 'phone', 'video'], reply: 'You can contact us through WhatsApp, email, phone, or video consultation from the contact page to discuss your fibroid symptoms and treatment options.' },
         { pattern: ['fibroid', 'treatment', 'therapy', 'support'], reply: 'We provide non-surgical fibroid treatment using botanical formulation combined with clinical monitoring. Our approach is designed to reduce fibroid symptoms and improve uterine health without surgery.' },

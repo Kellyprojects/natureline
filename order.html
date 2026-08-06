@@ -6,6 +6,7 @@
     <link rel="icon" type="image/jpeg" href="images/images/fav-icons.png">
     <link rel="apple-touch-icon" href="images/images/logo.jpeg">
     <title>Order Now | Natureline Healthcare Services</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
@@ -27,7 +28,7 @@
       <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
-    <a href="treatments.html">Treatments</a>
+    <a href="treatments.html">Treatments & Products</a>
     <a href="team.html">Team</a>
     <a href="contact.html">Contact</a>
     <a href="order.html" class="order-btn">Order Now</a>
@@ -47,7 +48,7 @@
 <div class="mobile-menu">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
-    <a href="treatments.html">Treatments</a>
+    <a href="treatments.html">Treatments & Products</a>
     <a href="team.html">Team</a>
     <a href="contact.html">Contact</a>
     <a href="order.html" class="order-btn-mobile">Order Now</a>
@@ -60,20 +61,19 @@
 
 
 
-
     <main>
         <section class="hero">
             <div>
                 <div class="hero-badge">💳 Secure checkout</div>
-                <h1 id="order-hero-title">Begin your fibroid treatment consultation</h1>
-                <p id="order-hero-desc">Complete the intake form and secure payment to schedule your personalized clinical assessment and start the Natureline non-surgical treatment pathway.</p>
+                <h1 id="order-hero-title">Choose your Eldora product order</h1>
+                <p id="order-hero-desc">Select from the updated Eldora catalog, review the live price for each item, and complete checkout securely.</p>
                 <div class="quote-box" style="margin-top:1rem;">
-                    <strong id="order-price">Consultation & treatment package: ₦35,000</strong>
-                    <p id="order-note">After payment confirmation, our clinical team will contact you within 24 hours to schedule your initial assessment and discuss your personalized treatment plan.</p>
+                   <strong id="order-price">Selected product price: ₦18,500</strong>
+                    <p id="order-note">After payment confirmation, our team will process your order and contact you with delivery or pickup details.</p>
                 </div>
             </div>
             <div class="card">
-                <h3>Consultation intake form</h3>
+                <h3>Product checkout form</h3>
                 
                 <label class="field-label" for="order-name">Full name</label>
                 <input id="order-name" type="text" placeholder="Your full name">
@@ -88,23 +88,44 @@
                 <textarea id="order-delivery-address" rows="3" placeholder="Enter your delivery address or pickup details"></textarea>
 
                 <!-- NEW: Dynamic Product Selector Dropdown -->
-                <label class="field-label" for="order-product-select">Select treatment option</label>
+                <label class="field-label" for="order-product-select">Select product</label>
                 <select id="order-product-select" onchange="updateSelectedPrice()" style="width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 8px;">
                     <!-- Dynamically populated by JS -->
                 </select>
 
                 <!-- NEW: Live Selected Price Indicator -->
                 <div id="dynamic-price-display" style="font-weight: bold; color: #0D7A39; margin-bottom: 1rem; font-size: 1.1rem;">
-                    Total Price: Loading...
+                    Selected product price: Loading...
                 </div>
                 
-                <label class="field-label" for="order-notes">Medical notes (optional)</label>
-                <textarea id="order-notes" rows="4" placeholder="Share any details about your fibroid symptoms or medical history the team should know"></textarea>
+                <label class="field-label" for="order-notes">Order notes (optional)</label>
+                <textarea id="order-notes" rows="4" placeholder="Share delivery instructions, quantity preferences, or any helpful order details"></textarea>
                 
                 <button onclick="payWithPaystack()" class="btn-primary" style="width:100%; margin-top:0.8rem;">Proceed to payment</button>
             </div>
         </section>
     </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div>
+                <strong>Natureline Healthcare Services</strong>
+                <p>Secure checkout. Product ordering. Patient support.</p>
+            </div>
+            <div class="social-links">
+                <p class="social-note">Visit our pages on Facebook, Instagram, YouTube, and LinkedIn.</p>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/share/g/1KQY7acdaJ/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div>
+                <a href="index.html">Home</a> • <a href="treatments.html">Treatments</a> • <a href="contact.html">Contact</a>
+            </div>
+        </div>
+    </footer>
 
     <script src="js/app.js"></script>
     <script src="js/security.js"></script>

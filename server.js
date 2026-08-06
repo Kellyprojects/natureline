@@ -408,7 +408,7 @@ app.post('/api/initialize-payment', async (req, res) => {
             email,
             phoneNumber: phoneNumber || 'N/A',
             deliveryAddress,
-            productName: productName || 'Consultation & treatment package',
+            productName: productName || 'Selected Eldora product',
             amount: fixedAmountNaira,
             paymentStatus: 'pending', // Keeps status as pending until verified
             orderDate: admin.firestore.FieldValue.serverTimestamp()
@@ -419,7 +419,7 @@ app.post('/api/initialize-payment', async (req, res) => {
             `Customer: ${customerName}`,
             `Email: ${email}`,
             `Phone: ${phoneNumber || 'N/A'}`,
-            `Product: ${productName || 'Consultation & treatment package'}`,
+            `Product: ${productName || 'Selected Eldora product'}`,
             `Amount (NGN): ${fixedAmountNaira}`,
             `Delivery Address: ${deliveryAddress}`,
             'Payment Status: pending'
