@@ -251,145 +251,391 @@ function updateSelectedPrice() {
     }
 }
 
+
 // ==========================================
 // 4. CLIENT INTERACTIVE DIALOGS
 // ==========================================
-// UPGRADED: Transmits customer feedback data straight to Firebase collections
+
+// Render backend URL
+const API_BASE_URL = 'https://natureline.onrender.com';
+
+// ==========================================
+// CUSTOMER FEEDBACK - BASIC FORM
+// ==========================================
+// Sends customer feedback to the Render backend.
 async function submitCustomerFeedback(event) {
-    if (event) event.preventDefault(); // Stop standard HTML form page reloads
+    if (event) {
+        event.preventDefault();
+    }
 
-    const nameInput = document.getElementById('feedback-name') || document.getElementById('pub-feedback-name');
-    const emailInput = document.getElementById('feedback-email') || document.getElementById('pub-feedback-email');
-    const msgInput = document.getElementById('feedback-message') || document.getElementById('pub-feedback-text');
+    const nameInput =
+        document.getElementById('feedback-name') ||
+        document.getElementById('pub-feedback-name');
 
-    if (!nameInput || !msgInput || !nameInput.value.trim() || !msgInput.value.trim()) {
-        alert("Name and Message fields are required.");
+    const emailInput =
+        document.getElementById('feedback-email') ||
+        document.getElementById('pub-feedback-email');
+
+    const msgInput =
+        document.getElementById('feedback-message') ||
+        document.getElementById('pub-feedback-text');
+
+    if (
+        !nameInput ||
+        !msgInput ||
+        !nameInput.value.trim() ||
+        !msgInput.value.trim()
+    ) {
+        alert('Name and Message fields are required.');
         return;
     }
 
     const reviewPayload = {
         name: nameInput.value.trim(),
-        email: emailInput ? emailInput.value.trim() : 'Anonymous Client',
+        email: emailInput
+            ? emailInput.value.trim()
+            : 'Anonymous Client',
         rating: 5,
         message: msgInput.value.trim()
     };
 
     try {
-        const response = await fetch('/api/submit-feedback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(reviewPayload)
-        });
+        const response = await fetch(
+            `${API_BASE_URL}/api/submit-feedback`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(reviewPayload)
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Server returned HTTP ${response.status}`
+            );
+        }
 
         const result = await response.json();
 
         if (result.success) {
-            alert("Feedback sent successfully!");
+            alert('Feedback sent successfully!');
+
             nameInput.value = '';
-            if (emailInput) emailInput.value = '';
+
+            if (emailInput) {
+                emailInput.value = '';
+            }
+
             msgInput.value = '';
         } else {
-            alert("Server database rejected entry: " + result.message);
+            alert(
+                'Server database rejected entry: ' +
+                (result.message || 'Unknown error.')
+            );
         }
+
     } catch (err) {
-        console.error("Network communication fault with backend server:", err);
-        alert("Failed to submit feedback. Check that your Node backend server is running on port 5000.");
+        console.error(
+            'Network communication fault with backend server:',
+            err
+        );
+
+        alert(
+            'Failed to submit feedback. Please check your internet connection and try again.'
+        );
     }
 }
 
-// Ensure the function is accessible globally by the HTML button triggers
+// Make function accessible to HTML onclick handlers
 window.submitCustomerFeedback = submitCustomerFeedback;
+
+
+// ==========================================
+// FEEDBACK MODAL
+// ==========================================
 
 function openFeedbackModal() {
     const modal = document.getElementById('feedback-modal');
-    if (modal) modal.classList.remove('hidden');
+
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        console.error('Feedback modal not found: #feedback-modal');
+    }
 }
 
 function closeFeedbackModal() {
     const modal = document.getElementById('feedback-modal');
-    if (modal) modal.classList.add('hidden');
+
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
+window.openFeedbackModal = openFeedbackModal;
+window.closeFeedbackModal = closeFeedbackModal;
+
+
+// ==========================================
+// CLIENT CASE NOTE / FEEDBACK SUBMISSION
+// ==========================================
+// Sends the client's case note to Render.
+// If an image is selected, the image is uploaded first.
+// The returned image URL is then saved with the feedback.
 async function submitClientFeedback(event) {
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+    }
 
-    const nameInput = document.getElementById('fb-client-name');
-    const emailInput = document.getElementById('fb-client-email');
-    const messageInput = document.getElementById('fb-text');
-    const productInput = document.getElementById('fb-product-experience');
-    const companyInput = document.getElementById('fb-company-experience');
-    const imageInput = document.getElementById('fb-result-image');
+    // ------------------------------------------
+    // Find form fields
+    // ------------------------------------------
 
-    const name = nameInput?.value.trim() || '';
-    const email = emailInput?.value.trim() || '';
-    const message = messageInput?.value.trim() || '';
-    const productExperience = productInput?.value.trim() || '';
-    const companyExperience = companyInput?.value.trim() || '';
+    const nameInput =
+        document.getElementById('fb-client-name');
+
+    const emailInput =
+        document.getElementById('fb-client-email');
+
+    const messageInput =
+        document.getElementById('fb-text');
+
+    const productInput =
+        document.getElementById('fb-product-experience');
+
+    const companyInput =
+        document.getElementById('fb-company-experience');
+
+    const imageInput =
+        document.getElementById('fb-result-image');
+
+
+    // ------------------------------------------
+    // Read form values
+    // ------------------------------------------
+
+    const name =
+        nameInput?.value.trim() || '';
+
+    const email =
+        emailInput?.value.trim() || '';
+
+    const message =
+        messageInput?.value.trim() || '';
+
+    const productExperience =
+        productInput?.value.trim() || '';
+
+    const companyExperience =
+        companyInput?.value.trim() || '';
+
+
+    // ------------------------------------------
+    // Validate required fields
+    // ------------------------------------------
 
     if (!name || !message) {
-        alert('Please enter your name and story before submitting.');
+        alert(
+            'Please enter your name and story before submitting.'
+        );
         return;
     }
 
+
+    // ------------------------------------------
+    // Image upload
+    // ------------------------------------------
+
     let imageUrl = '';
+
     const file = imageInput?.files?.[0];
 
     try {
+
         if (file) {
+
             const formData = new FormData();
+
             formData.append('image', file);
 
-            const uploadResponse = await fetch('https://natureline.onrender.com/api/upload-image', {
-                method: 'POST',
-                body: formData
-            });
 
-            const uploadResult = await uploadResponse.json();
-            if (uploadResult.success) {
-                imageUrl = uploadResult.url;
+            const uploadResponse = await fetch(
+                `${API_BASE_URL}/api/upload-image`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+
+
+            if (!uploadResponse.ok) {
+                throw new Error(
+                    `Image upload failed with HTTP ${uploadResponse.status}`
+                );
+            }
+
+
+            const uploadResult =
+                await uploadResponse.json();
+
+
+            if (!uploadResult.success) {
+
+                throw new Error(
+                    uploadResult.message ||
+                    'The image could not be uploaded.'
+                );
+            }
+
+
+            imageUrl =
+                uploadResult.url || '';
+
+
+            if (!imageUrl) {
+
+                throw new Error(
+                    'The image upload succeeded but no image URL was returned.'
+                );
             }
         }
 
-        const response = await fetch('https://natureline.onrender.com/api/submit-feedback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name,
-                email,
-                message,
-                rating: 5,
-                productExperience,
-                companyExperience,
-                imageUrl
-            })
-        });
 
-        const result = await response.json();
+        // ------------------------------------------
+        // Submit feedback to Render
+        // ------------------------------------------
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/submit-feedback`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    name,
+                    email,
+                    message,
+                    rating: 5,
+                    productExperience,
+                    companyExperience,
+                    imageUrl
+                })
+            }
+        );
+
+
+        if (!response.ok) {
+            throw new Error(
+                `Feedback submission failed with HTTP ${response.status}`
+            );
+        }
+
+
+        const result =
+            await response.json();
+
+
+        // ------------------------------------------
+        // Check server response
+        // ------------------------------------------
 
         if (!result.success) {
-            alert(result.message || 'Could not submit your case note.');
+
+            alert(
+                result.message ||
+                'Could not submit your case note.'
+            );
+
             return;
         }
 
-        // Clear input fields
-        if (nameInput) nameInput.value = '';
-        if (emailInput) emailInput.value = '';
-        if (messageInput) messageInput.value = '';
-        if (productInput) productInput.value = '';
-        if (companyInput) companyInput.value = '';
-        if (imageInput) imageInput.value = '';
+
+        // ------------------------------------------
+        // Clear form
+        // ------------------------------------------
+
+        if (nameInput) {
+            nameInput.value = '';
+        }
+
+        if (emailInput) {
+            emailInput.value = '';
+        }
+
+        if (messageInput) {
+            messageInput.value = '';
+        }
+
+        if (productInput) {
+            productInput.value = '';
+        }
+
+        if (companyInput) {
+            companyInput.value = '';
+        }
+
+        if (imageInput) {
+            imageInput.value = '';
+        }
+
+
+        // ------------------------------------------
+        // Close modal
+        // ------------------------------------------
 
         closeFeedbackModal();
-        alert('Thank you! Your case note has been submitted for review.');
-        renderPublicPage();
+
+
+        // ------------------------------------------
+        // Notify customer
+        // ------------------------------------------
+
+        alert(
+            'Thank you! Your case note has been submitted for review.'
+        );
+
+
+        // ------------------------------------------
+        // Refresh public feedback if function exists
+        // ------------------------------------------
+
+        if (typeof renderPublicPage === 'function') {
+            renderPublicPage();
+        }
+
+
     } catch (error) {
-        console.error('Feedback submission failed:', error);
-        alert('Could not submit your feedback right now. Please try again later.');
+
+        console.error(
+            'Feedback submission failed:',
+            error
+        );
+
+        alert(
+            error.message ||
+            'Could not submit your feedback right now. Please try again later.'
+        );
     }
 }
-window.openFeedbackModal = openFeedbackModal;
-window.closeFeedbackModal = closeFeedbackModal;
+
+
+// Make function accessible to HTML onclick handlers
 window.submitClientFeedback = submitClientFeedback;
+
+
+
+
+
+
+
+
+
+
 
 
 // ==========================================
