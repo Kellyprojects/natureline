@@ -11,8 +11,6 @@ const nodemailer = require('nodemailer');
 const admin = require('firebase-admin'); // Added Firebase SDK
 require('dotenv').config();
 
-const app = express();
-
 // Middleware
 const cors = require('cors');
 
