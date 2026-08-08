@@ -14,12 +14,24 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
+const cors = require('cors');
+
 app.use(express.json());
+
+// Enable CORS for your custom domain, GitHub Pages, and local testing
 app.use(cors({
-    origin: 'https://kellyprojects.github.io',
+    origin: [
+        'https://naturelinehealthcare.com',
+        'https://www.naturelinehealthcare.com',
+        'https://kellyprojects.github.io',
+        'http://localhost:5000'
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
+
+
 
 const PORT = process.env.PORT || 5000;
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
