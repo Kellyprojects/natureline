@@ -178,10 +178,6 @@ app.get('/', (req, res) => {
 
 
 
-
-
-
-
 // -------------------------------------------------------------
 // DATABASE & PAYMENT API ENDPOINTS
 // -------------------------------------------------------------
@@ -201,6 +197,7 @@ app.post('/api/save-content', async (req, res) => {
     }
 });
 
+// Image upload endpoint via Multer + Cloudinary
 app.post('/api/upload-image', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
@@ -442,11 +439,6 @@ app.post('/api/initialize-payment', async (req, res) => {
     }
 });
 
-// Start listening safely
-app.listen(PORT, () => {
-    console.log(`Natureline Medical Secure Engine running optimally on port ${PORT}`);
-});
-
 // Endpoint to verify Admin login securely via .env configurations
 app.post('/api/admin-login', (req, res) => {
     const { username, password } = req.body;
@@ -460,3 +452,12 @@ app.post('/api/admin-login', (req, res) => {
         return res.status(401).json({ success: false, message: "Invalid admin parameters." });
     }
 });
+
+// Start listening safely
+app.listen(PORT, () => {
+    console.log(`Natureline Medical Secure Engine running optimally on port ${PORT}`);
+});
+
+
+
+

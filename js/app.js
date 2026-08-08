@@ -194,6 +194,10 @@ async function renderPublicPage() {
     }
 }
 
+
+
+
+
 // ==========================================
 // 3. CATALOG INTERFACE CODES
 // ==========================================
@@ -256,7 +260,7 @@ function updateSelectedPrice() {
 // 4. CLIENT INTERACTIVE DIALOGS
 // ==========================================
 
-// Render backend URL
+// Render backend base URL
 const API_BASE_URL = 'https://natureline.onrender.com';
 
 // ==========================================
@@ -389,77 +393,35 @@ async function submitClientFeedback(event) {
         event.preventDefault();
     }
 
-    // ------------------------------------------
     // Find form fields
-    // ------------------------------------------
+    const nameInput = document.getElementById('fb-client-name');
+    const emailInput = document.getElementById('fb-client-email');
+    const messageInput = document.getElementById('fb-text');
+    const productInput = document.getElementById('fb-product-experience');
+    const companyInput = document.getElementById('fb-company-experience');
+    const imageInput = document.getElementById('fb-result-image');
 
-    const nameInput =
-        document.getElementById('fb-client-name');
-
-    const emailInput =
-        document.getElementById('fb-client-email');
-
-    const messageInput =
-        document.getElementById('fb-text');
-
-    const productInput =
-        document.getElementById('fb-product-experience');
-
-    const companyInput =
-        document.getElementById('fb-company-experience');
-
-    const imageInput =
-        document.getElementById('fb-result-image');
-
-
-    // ------------------------------------------
     // Read form values
-    // ------------------------------------------
+    const name = nameInput?.value.trim() || '';
+    const email = emailInput?.value.trim() || '';
+    const message = messageInput?.value.trim() || '';
+    const productExperience = productInput?.value.trim() || '';
+    const companyExperience = companyInput?.value.trim() || '';
 
-    const name =
-        nameInput?.value.trim() || '';
-
-    const email =
-        emailInput?.value.trim() || '';
-
-    const message =
-        messageInput?.value.trim() || '';
-
-    const productExperience =
-        productInput?.value.trim() || '';
-
-    const companyExperience =
-        companyInput?.value.trim() || '';
-
-
-    // ------------------------------------------
     // Validate required fields
-    // ------------------------------------------
-
     if (!name || !message) {
-        alert(
-            'Please enter your name and story before submitting.'
-        );
+        alert('Please enter your name and story before submitting.');
         return;
     }
 
-
-    // ------------------------------------------
     // Image upload
-    // ------------------------------------------
-
     let imageUrl = '';
-
     const file = imageInput?.files?.[0];
 
     try {
-
         if (file) {
-
             const formData = new FormData();
-
             formData.append('image', file);
-
 
             const uploadResponse = await fetch(
                 `${API_BASE_URL}/api/upload-image`,
@@ -469,53 +431,37 @@ async function submitClientFeedback(event) {
                 }
             );
 
-
             if (!uploadResponse.ok) {
                 throw new Error(
                     `Image upload failed with HTTP ${uploadResponse.status}`
                 );
             }
 
-
-            const uploadResult =
-                await uploadResponse.json();
-
+            const uploadResult = await uploadResponse.json();
 
             if (!uploadResult.success) {
-
                 throw new Error(
-                    uploadResult.message ||
-                    'The image could not be uploaded.'
+                    uploadResult.message || 'The image could not be uploaded.'
                 );
             }
 
-
-            imageUrl =
-                uploadResult.url || '';
-
+            imageUrl = uploadResult.url || '';
 
             if (!imageUrl) {
-
                 throw new Error(
                     'The image upload succeeded but no image URL was returned.'
                 );
             }
         }
 
-
-        // ------------------------------------------
         // Submit feedback to Render
-        // ------------------------------------------
-
         const response = await fetch(
             `${API_BASE_URL}/api/submit-feedback`,
             {
                 method: 'POST',
-
                 headers: {
                     'Content-Type': 'application/json'
                 },
-
                 body: JSON.stringify({
                     name,
                     email,
@@ -528,93 +474,43 @@ async function submitClientFeedback(event) {
             }
         );
 
-
         if (!response.ok) {
             throw new Error(
                 `Feedback submission failed with HTTP ${response.status}`
             );
         }
 
+        const result = await response.json();
 
-        const result =
-            await response.json();
-
-
-        // ------------------------------------------
         // Check server response
-        // ------------------------------------------
-
         if (!result.success) {
-
             alert(
-                result.message ||
-                'Could not submit your case note.'
+                result.message || 'Could not submit your case note.'
             );
-
             return;
         }
 
-
-        // ------------------------------------------
         // Clear form
-        // ------------------------------------------
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (messageInput) messageInput.value = '';
+        if (productInput) productInput.value = '';
+        if (companyInput) companyInput.value = '';
+        if (imageInput) imageInput.value = '';
 
-        if (nameInput) {
-            nameInput.value = '';
-        }
-
-        if (emailInput) {
-            emailInput.value = '';
-        }
-
-        if (messageInput) {
-            messageInput.value = '';
-        }
-
-        if (productInput) {
-            productInput.value = '';
-        }
-
-        if (companyInput) {
-            companyInput.value = '';
-        }
-
-        if (imageInput) {
-            imageInput.value = '';
-        }
-
-
-        // ------------------------------------------
         // Close modal
-        // ------------------------------------------
-
         closeFeedbackModal();
 
-
-        // ------------------------------------------
         // Notify customer
-        // ------------------------------------------
+        alert('Thank you! Your case note has been submitted for review.');
 
-        alert(
-            'Thank you! Your case note has been submitted for review.'
-        );
-
-
-        // ------------------------------------------
         // Refresh public feedback if function exists
-        // ------------------------------------------
-
         if (typeof renderPublicPage === 'function') {
             renderPublicPage();
         }
 
-
     } catch (error) {
-
-        console.error(
-            'Feedback submission failed:',
-            error
-        );
+        console.error('Feedback submission failed:', error);
 
         alert(
             error.message ||
@@ -623,13 +519,8 @@ async function submitClientFeedback(event) {
     }
 }
 
-
 // Make function accessible to HTML onclick handlers
 window.submitClientFeedback = submitClientFeedback;
-
-
-
-
 
 
 
