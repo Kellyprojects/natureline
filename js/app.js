@@ -339,7 +339,7 @@ async function submitClientFeedback(event) {
             const formData = new FormData();
             formData.append('image', file);
 
-            const uploadResponse = await fetch('/api/upload-image', {
+            const uploadResponse = await fetch('https://natureline.onrender.com/api/upload-image', {
                 method: 'POST',
                 body: formData
             });
@@ -350,7 +350,7 @@ async function submitClientFeedback(event) {
             }
         }
 
-        const response = await fetch('/api/submit-feedback', {
+        const response = await fetch('https://natureline.onrender.com/api/submit-feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -371,18 +371,7 @@ async function submitClientFeedback(event) {
             return;
         }
 
-        const stored = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
-        stored.unshift({
-            name,
-            email,
-            message,
-            productExperience,
-            companyExperience,
-            imageUrl,
-            status: 'pending'
-        });
-        localStorage.setItem('natureline_feedback', JSON.stringify(stored));
-
+        // Clear input fields
         if (nameInput) nameInput.value = '';
         if (emailInput) emailInput.value = '';
         if (messageInput) messageInput.value = '';
@@ -398,7 +387,6 @@ async function submitClientFeedback(event) {
         alert('Could not submit your feedback right now. Please try again later.');
     }
 }
-
 window.openFeedbackModal = openFeedbackModal;
 window.closeFeedbackModal = closeFeedbackModal;
 window.submitClientFeedback = submitClientFeedback;

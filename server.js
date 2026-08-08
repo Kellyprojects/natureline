@@ -15,11 +15,15 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: '*' }));
+app.use(cors({
+    origin: 'https://kellyprojects.github.io',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const PORT = process.env.PORT || 5000;
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || 'https://natureline-healthcare.com/verify-payment';
+const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || 'https://naturelinehealthcare.com/verify-payment';
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
 const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
 const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY;
