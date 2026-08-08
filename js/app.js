@@ -34,6 +34,9 @@ const defaultProducts = [
     { id: "p6", name: "Eldora Tumorex natural formula — 2 tablets", price: 35000 }
 ];
 
+// Render backend base URL
+const API_BASE_URL = 'https://natureline.onrender.com';
+
 function getCanonicalProducts() {
     const seen = new Set();
 
@@ -73,10 +76,6 @@ if (!localStorage.getItem('natureline_content')) {
     }
 }
 
-if (!localStorage.getItem('natureline_feedback')) {
-    localStorage.setItem('natureline_feedback', JSON.stringify([]));
-}
-
 if (!localStorage.getItem('natureline_products')) {
     localStorage.setItem('natureline_products', JSON.stringify(getCanonicalProducts()));
 } else {
@@ -100,7 +99,7 @@ async function renderPublicPage() {
     let content = defaultContent;
 
     try {
-        const response = await fetch('/api/get-content');
+        const response = await fetch(`${API_BASE_URL}/api/get-content`);
         const dbContent = await response.json();
         // If the database has content, merge it with defaults so nothing breaks
         if (dbContent && Object.keys(dbContent).length > 0) {
@@ -111,8 +110,6 @@ async function renderPublicPage() {
         // Fallback to localStorage if the server is offline during development
         content = JSON.parse(localStorage.getItem('natureline_content')) || defaultContent;
     }
-
-    const feedbackList = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
 
     const heroTitle = document.getElementById('pub-hero-title');
     const heroDesc = document.getElementById('pub-hero-desc');
@@ -156,47 +153,52 @@ async function renderPublicPage() {
     if (orderPagePrice) orderPagePrice.innerText = content.orderPagePrice || defaultContent.orderPagePrice;
     if (orderPageNote) orderPageNote.innerText = content.orderPageNote || defaultContent.orderPageNote;
 
-    const container = document.getElementById('pub-feedback-container');
-    if (!container) return;
+    const feedbackContainer = document.getElementById('pub-feedback-container');
+    if (!feedbackContainer) return;
     
     try {
-        const response = await fetch('/api/get-feedbacks?status=approved');
+        // Show loading state
+        feedbackContainer.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">Loading client stories...</p>';
+
+        // Fetch ONLY approved feedbacks from your backend
+        const response = await fetch(`${API_BASE_URL}/api/get-feedbacks?status=approved`);
         const result = await response.json();
-        const feedbacks = Array.isArray(result.feedbacks) ? result.feedbacks : [];
+        
+        const feedbacks = result.feedbacks || [];
 
-        if (!feedbacks.length) {
-            container.innerHTML = '<p style="color:#64748b;">No approved case notes yet.</p>';
+        if (feedbacks.length === 0) {
+            feedbackContainer.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No public case notes available yet.</p>';
             return;
         }
 
-        container.innerHTML = feedbacks.map((item) => `
-            <div class="feature-card" style="border:1px solid #e2e8f0;">
-                <strong>${escapeHtml(item.name || 'Client')}</strong>
-                <p style="margin:0.4rem 0 0;color:#475569;">${escapeHtml(item.message || '')}</p>
-                ${item.productExperience ? `<p style="margin:0.4rem 0 0;font-size:0.9rem;"><em>Product:</em> ${escapeHtml(item.productExperience)}</p>` : ''}
-                ${item.companyExperience ? `<p style="margin:0.3rem 0 0;font-size:0.9rem;"><em>Company:</em> ${escapeHtml(item.companyExperience)}</p>` : ''}
+        // Generate HTML for each approved feedback
+        feedbackContainer.innerHTML = feedbacks.map(item => {
+            const imageHtml = item.imageUrl 
+                ? `<div style="margin-top:0.75rem;"><img src="${escapeHtml(item.imageUrl)}" alt="Client Result" style="width:100%; border-radius:8px; max-height:200px; object-fit:cover;"></div>` 
+                : '';
+
+            return `
+            <div class="card" style="padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <strong style="color:#0f172a; font-size:1.1rem;">${escapeHtml(item.name || 'Anonymous')}</strong>
+                        <span style="color:#f59e0b; font-size:0.8rem;">★★★★★</span>
+                    </div>
+                    <p style="color:#475569; font-size:0.95rem; line-height:1.6; margin-bottom:1rem;">
+                        "${escapeHtml(item.message)}"
+                    </p>
+                    ${item.productExperience ? `<div style="margin-bottom:0.5rem; font-size:0.85rem; color:#334155;"><strong>Product Experience:</strong> ${escapeHtml(item.productExperience)}</div>` : ''}
+                    ${item.companyExperience ? `<div style="margin-bottom:0.5rem; font-size:0.85rem; color:#334155;"><strong>Natureline Experience:</strong> ${escapeHtml(item.companyExperience)}</div>` : ''}
+                </div>
+                ${imageHtml}
             </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (error) {
-        const fallbackFeedbacks = JSON.parse(localStorage.getItem('natureline_feedback')) || [];
-
-        if (!fallbackFeedbacks.length) {
-            container.innerHTML = '<p style="color:#64748b;">No case notes available right now.</p>';
-            return;
-        }
-
-        container.innerHTML = fallbackFeedbacks.map((item) => `
-            <div class="feature-card" style="border:1px solid #e2e8f0;">
-                <strong>${escapeHtml(item.name || 'Client')}</strong>
-                <p style="margin:0.4rem 0 0;color:#475569;">${escapeHtml(item.message || '')}</p>
-            </div>
-        `).join('');
+        console.error('Failed to load public feedback:', error);
+        feedbackContainer.innerHTML = '<p style="color:#b91c1c; font-size:0.9rem;">Unable to load stories at this time.</p>';
     }
 }
-
-
-
-
 
 // ==========================================
 // 3. CATALOG INTERFACE CODES
@@ -259,9 +261,6 @@ function updateSelectedPrice() {
 // ==========================================
 // 4. CLIENT INTERACTIVE DIALOGS
 // ==========================================
-
-// Render backend base URL
-const API_BASE_URL = 'https://natureline.onrender.com';
 
 // ==========================================
 // CUSTOMER FEEDBACK - BASIC FORM
@@ -522,13 +521,6 @@ async function submitClientFeedback(event) {
 // Make function accessible to HTML onclick handlers
 window.submitClientFeedback = submitClientFeedback;
 
-
-
-
-
-
-
-
 // ==========================================
 // 5. SECURE PAYSTACK GATEWAY
 // ==========================================
@@ -561,7 +553,7 @@ function payWithPaystack() {
         return;
     }
 
-    fetch('/api/initialize-payment', {
+    fetch(`${API_BASE_URL}/api/initialize-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
