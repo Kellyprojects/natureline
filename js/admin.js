@@ -1,3 +1,6 @@
+// Define your Render backend URL so the admin page knows where to look
+const API_BASE_URL = 'https://natureline.onrender.com';
+
 const adminCredentials = { username: 'natureline', password: 'admin2026' };
 
 async function processLogin() {
@@ -8,7 +11,7 @@ async function processLogin() {
     const dashboard = document.getElementById('dashboard-container');
 
     try {
-        const response = await fetch('/api/admin-login', {
+        const response = await fetch(`${API_BASE_URL}/api/admin-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -51,7 +54,7 @@ async function uploadToCloudinary(elementId, currentUrlValue) {
         formData.append('image', fileInput.files[0]);
 
         try {
-            const response = await fetch('/api/upload-image', {
+            const response = await fetch(`${API_BASE_URL}/api/upload-image`, {
                 method: 'POST',
                 body: formData
             });
@@ -72,7 +75,7 @@ async function uploadToCloudinary(elementId, currentUrlValue) {
 
 async function loadAdminContent() {
     try {
-        const response = await fetch('/api/get-content');
+        const response = await fetch(`${API_BASE_URL}/api/get-content`);
         const content = await response.json();
 
         document.getElementById('edit-hero-title').value = content.heroTitle || '';
@@ -138,7 +141,7 @@ async function savePageContent() {
     };
 
     try {
-        const response = await fetch('/api/save-content', {
+        const response = await fetch(`${API_BASE_URL}/api/save-content`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(content)
@@ -162,7 +165,7 @@ async function renderAdminFeedbackQueue() {
     if (!queue) return;
 
     try {
-        const response = await fetch('/api/get-feedbacks?status=all');
+        const response = await fetch(`${API_BASE_URL}/api/get-feedbacks?status=all`);
         const result = await response.json();
         const feedbacks = result.feedbacks || [];
 
@@ -207,7 +210,7 @@ function escapeAdminHtml(value) {
 
 async function reviewFeedback(id, action) {
     try {
-        const response = await fetch(`/api/feedbacks/${encodeURIComponent(id)}/review`, {
+        const response = await fetch(`${API_BASE_URL}/api/feedbacks/${encodeURIComponent(id)}/review`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action })
@@ -228,7 +231,7 @@ async function renderAdminProducts() {
     if (!container) return;
 
     try {
-        const response = await fetch('/api/products');
+        const response = await fetch(`${API_BASE_URL}/api/products`);
         const result = await response.json();
         const products = result.products || [];
 
@@ -265,7 +268,7 @@ async function addNewProduct() {
     }
 
     try {
-        const response = await fetch('/api/products', {
+        const response = await fetch(`${API_BASE_URL}/api/products`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, price })
@@ -289,7 +292,7 @@ async function deleteProduct(id) {
     if (!confirm('Delete this product from the catalog?')) return;
 
     try {
-        const response = await fetch(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE_URL}/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
         const result = await response.json();
 
         if (!result.success) {
@@ -308,7 +311,7 @@ async function renderAdminOrders() {
     if (!container) return;
 
     try {
-        const response = await fetch('/api/orders');
+        const response = await fetch(`${API_BASE_URL}/api/orders`);
         const result = await response.json();
         const orders = result.orders || [];
 
