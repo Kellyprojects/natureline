@@ -1,9 +1,7 @@
-/**
- * Natureline Healthcare Services - Secure Backend Server Architecture
- */
+/* Natureline Healthcare Services - Secure Backend Server Architecture */
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
+const cors = require('cors'); // Declared ONLY ONCE here
 const path = require('path');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -11,9 +9,10 @@ const nodemailer = require('nodemailer');
 const admin = require('firebase-admin'); // Added Firebase SDK
 require('dotenv').config();
 
-// Middleware
-const cors = require('cors');
+// Initialize Express app (THIS WAS MISSING!)
+const app = express();
 
+// Middleware
 app.use(express.json());
 
 // List all origins allowed to send requests to your backend
@@ -42,7 +41,6 @@ app.use(cors({
 
 // Handle preflight requests for all routes
 app.options('*', cors());
-}));
 
 
 
