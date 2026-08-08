@@ -18,17 +18,32 @@ const cors = require('cors');
 
 app.use(express.json());
 
-// Enable CORS for your custom domain, GitHub Pages, and local testing
+// List all origins allowed to send requests to your backend
+const allowedOrigins = [
+    'https://naturelinehealthcare.com',
+    'https://www.naturelinehealthcare.com',
+    'https://kellyprojects.github.io',
+    'https://natureline.onrender.com',
+    'http://localhost:5000',
+    'http://localhost:3000'
+];
+
 app.use(cors({
-    origin: [
-        'https://naturelinehealthcare.com',
-        'https://www.naturelinehealthcare.com',
-        'https://kellyprojects.github.io',
-        'http://localhost:5000'
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS policy error: Origin not allowed'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
+}));
+
+// Handle preflight requests for all routes
+app.options('*', cors());
 }));
 
 
