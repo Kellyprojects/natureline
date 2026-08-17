@@ -521,38 +521,64 @@ async function submitClientFeedback(event) {
 // Make function accessible to HTML onclick handlers
 window.submitClientFeedback = submitClientFeedback;
 
+
+
+
+
+
+
 // ==========================================
-// 5. SECURE PAYSTACK GATEWAY
+// 5. SECURE PAYSTACK GATEWAY (WITH QUANTITY & DISCLAIMER VALIDATION)
 // ==========================================
 function payWithPaystack() {
     const name = document.getElementById('order-name')?.value || document.getElementById('paystack-email')?.value || '';
     const email = document.getElementById('order-email')?.value || document.getElementById('paystack-email')?.value || '';
     const phone = document.getElementById('order-phone')?.value || '';
     const deliveryAddress = document.getElementById('order-delivery-address')?.value?.trim() || document.getElementById('order-notes')?.value?.trim() || '';
-    const notes = document.getElementById('order-notes')?.value || '';
-    const selectDropdown = document.getElementById('order-product-select');
     
+    // 1. Email check
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email.');
         return;
     }
 
-    // Default to base amount if no selection structure is loaded
-    const canonicalProducts = getCanonicalProducts();
-    let checkoutAmount = canonicalProducts[0].price;
-    let selectedProductName = canonicalProducts[0].name;
-
-    if (selectDropdown && selectDropdown.selectedIndex !== -1) {
-        const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
-        checkoutAmount = Number(selectedOption.getAttribute('data-price'));
-        selectedProductName = selectedOption.textContent;
-    }
-
+    // 2. Address check
     if (!deliveryAddress) {
         alert('Please add a delivery address or notes before continuing.');
         return;
     }
 
+    // 3. Disclaimer Checkbox Validation
+    const disclaimer = document.getElementById('dosage-disclaimer');
+    if (disclaimer && !disclaimer.checked) {
+        alert('Please check the box to confirm you agree to the terms and liability waiver before proceeding.');
+        return;
+    }
+
+    // 4. Check for selected quantities from the number input fields
+    const qtyInputs = document.querySelectorAll('.product-qty');
+    let selectedProductsList = [];
+    let totalQuantity = 0;
+
+    qtyInputs.forEach(input => {
+        let qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            let productName = input.getAttribute('name') || input.previousElementSibling?.textContent || 'Product';
+            selectedProductsList.push(`${productName} (Qty: ${qty})`);
+            totalQuantity += qty;
+        }
+    });
+
+    if (totalQuantity === 0) {
+        alert('Please select a quantity of at least one product to order.');
+        return;
+    }
+
+    // 5. Calculate total and format product names for backend
+    let checkoutAmount = window.currentOrderTotal || 0;
+    let selectedProductName = selectedProductsList.join(', ');
+
+    // 6. Send to backend
     fetch(`${API_BASE_URL}/api/initialize-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -580,6 +606,8 @@ function payWithPaystack() {
             alert('Payment setup failed. Please confirm the backend server is running and your Paystack key is configured.');
         });
 }
+
+
 
 // ==========================================
 // 6. GLOBAL LAYOUT LOGICS (MENU/NAV)

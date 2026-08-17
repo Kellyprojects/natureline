@@ -337,6 +337,117 @@ async function renderAdminOrders() {
     }
 }
 
+
+// ==========================================
+// DYNAMIC PRODUCT CATALOG MANAGEMENT
+// ==========================================
+
+// 1. Fetch and display products in the admin panel
+async function loadAdminProducts() {
+    const listContainer = document.getElementById('admin-product-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<em>Loading catalog...</em>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/products`);
+        const data = await response.json();
+
+        if (data.success && data.products && data.products.length > 0) {
+            listContainer.innerHTML = data.products.map(product => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #334155;">${escapeHtml(product.name)} — ₦${Number(product.price).toLocaleString()}</span>
+                    <button onclick="deleteProduct('${product.id}')" style="background: #b91c1c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete</button>
+                </div>
+            `).join('');
+        } else {
+            listContainer.innerHTML = '<p style="color: #64748b;">No products currently in the catalog.</p>';
+        }
+    } catch (error) {
+        console.error("Failed to load products:", error);
+        listContainer.innerHTML = '<p style="color: #b91c1c;">Failed to load catalog.</p>';
+    }
+}
+
+// 2. Add a new product to the database
+async function addNewProduct() {
+    const nameInput = document.getElementById('admin-prod-name');
+    const priceInput = document.getElementById('admin-prod-price');
+    
+    const name = nameInput.value.trim();
+    const price = Number(priceInput.value);
+
+    if (!name || price <= 0) {
+        alert("Please enter a valid product name and price.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, price })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Clear the inputs
+            nameInput.value = '';
+            priceInput.value = '';
+            // Refresh the list immediately
+            loadAdminProducts();
+            alert("Product added successfully!");
+        } else {
+            alert(data.message || "Failed to add product.");
+        }
+    } catch (error) {
+        console.error("Error adding product:", error);
+        alert("Network error. Could not communicate with database.");
+    }
+}
+
+// 3. Delete a product from the database
+async function deleteProduct(productId) {
+    if (!confirm("Are you sure you want to delete this product from the catalog?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadAdminProducts(); // Refresh the list
+        } else {
+            alert(data.message || "Failed to delete product.");
+        }
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Network error. Could not delete product.");
+    }
+}
+
+// Ensure the catalog loads when the admin dashboard is opened
+document.addEventListener('DOMContentLoaded', () => {
+    // If we are on the admin page and logged in, load the products
+    const dashboard = document.getElementById('dashboard-container');
+    if (dashboard) {
+        // Create an observer to load products when dashboard becomes visible after login
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.style.display !== 'none') {
+                    loadAdminProducts();
+                }
+            });
+        });
+        observer.observe(dashboard, { attributes: true, attributeFilter: ['style'] });
+    }
+});
+
 window.processLogin = processLogin;
 window.logoutAdmin = logoutAdmin;
 window.savePageContent = savePageContent;
