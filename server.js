@@ -1,477 +1,486 @@
-// ==========================================
-// 1. DEFAULT CONTENT & STATE MANAGEMENT
-// ==========================================
-const defaultContent = {
-    heroTitle: 'Non-surgical fibroid treatment with clinical oversight',
-    heroDesc: 'Natureline provides evidence-informed botanical therapy combined with professional monitoring, offering women a safe alternative to surgery for fibroid management.',
-    heroImg: 'images/images/Dr-Williams-Natureline.jpg',
-    aboutText: 'Fibroids are benign uterine tumors affecting many women. Natureline\'s non-surgical approach uses proven botanical formulation and clinical oversight to reduce symptoms and improve quality of life without hysterectomy or myomectomy.',
-    homeDoctorTitle: 'Dr. Williams Adetunji',
-    homeDoctorText: 'Board-experienced medical professional specializing in non-surgical fibroid management and reproductive health support with a patient-centered clinical approach.',
-    homeDoctorImage: 'images/dr-williams.jpg',
-    aboutPageTitle: 'Understanding Natureline\'s approach to non-surgical fibroid management',
-    aboutPageText: 'Fibroids (benign uterine tumors) affect millions of women and can cause significant symptoms including heavy menstrual bleeding, pelvic pain, and urinary dysfunction. Natureline provides a clinical alternative to hysterectomy and myomectomy through evidence-informed botanical treatment combined with professional oversight and continuous patient support throughout the care pathway.',
-    aboutPageImage: 'images/images/fibroid-image.webp',
-    teamPageTitle: 'Clinical team expertise in fibroid care',
-    teamPageText: 'Our team combines medical expertise, patient advocacy, and a commitment to evidence-based non-surgical fibroid management. We work with each patient individually to ensure safe, effective treatment outcomes.',
-    teamPageImage: 'images/dr-williams.jpg',
-    contactPageTitle: 'Connect with our clinical team',
-    contactPageText: 'Reach us through multiple channels to discuss fibroid symptoms, treatment options, and how Natureline can support your healthcare journey.',
-    contactPageImage: 'images/images/team-leader.png',
-    orderPageTitle: 'Choose your Eldora product order',
-    orderPageDesc: 'Select from the updated Eldora catalog, review the live price for each item, and complete checkout securely.',
-    orderPagePrice: 'Selected product price: ₦0',
-    orderPageNote: 'After payment confirmation, our team will process your order and contact you with delivery or pickup details.'
-};
+/* Natureline Healthcare Services - Secure Backend Server Architecture */
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors'); // Declared ONLY ONCE here
+const path = require('path');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer');
+const admin = require('firebase-admin'); // Added Firebase SDK
+require('dotenv').config();
 
-const API_BASE_URL = 'https://natureline.onrender.com';
+// Initialize Express app (THIS WAS MISSING!)
+const app = express();
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+// Middleware
+app.use(express.json());
 
-// ==========================================
-// 2. PUBLIC VIEW RENDERING
-// ==========================================
-async function renderPublicPage() {
-    let content = defaultContent;
+// List all origins allowed to send requests to your backend
+const allowedOrigins = [
+    'https://naturelinehealthcare.com',
+    'https://www.naturelinehealthcare.com',
+    'https://kellyprojects.github.io',
+    'https://natureline.onrender.com',
+    'http://localhost:5000',
+    'http://localhost:3000'
+];
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/get-content`);
-        const dbContent = await response.json();
-        if (dbContent && Object.keys(dbContent).length > 0) {
-            content = { ...defaultContent, ...dbContent };
-        }
-    } catch (error) {
-        console.error("Critical database fetch failed, running on fallback defaults:", error);
-    }
-
-    const heroTitle = document.getElementById('pub-hero-title');
-    const heroDesc = document.getElementById('pub-hero-desc');
-    const heroImg = document.getElementById('pub-hero-img');
-    const aboutText = document.getElementById('pub-about-text');
-    const homeDoctorTitle = document.getElementById('home-doctor-title');
-    const homeDoctorText = document.getElementById('home-doctor-text');
-    const homeDoctorImage = document.getElementById('home-doctor-image');
-    const aboutPageTitle = document.getElementById('about-page-title');
-    const aboutPageText = document.getElementById('about-page-text');
-    const aboutPageImage = document.getElementById('about-page-image');
-    const teamPageTitle = document.getElementById('team-page-title');
-    const teamPageText = document.getElementById('team-page-text');
-    const teamPageImage = document.getElementById('team-page-image');
-    const contactPageTitle = document.getElementById('contact-page-title');
-    const contactPageText = document.getElementById('contact-page-text');
-    const contactPageImage = document.getElementById('contact-page-image');
-    const orderPageTitle = document.getElementById('order-hero-title');
-    const orderPageDesc = document.getElementById('order-hero-desc');
-    const orderPagePrice = document.getElementById('order-price');
-    const orderPageNote = document.getElementById('order-note');
-
-    if (heroTitle) heroTitle.innerText = content.heroTitle || defaultContent.heroTitle;
-    if (heroDesc) heroDesc.innerText = content.heroDesc || defaultContent.heroDesc;
-    if (heroImg) heroImg.src = content.heroImg || defaultContent.heroImg;
-    if (aboutText) aboutText.innerText = content.aboutText || defaultContent.aboutText;
-    if (homeDoctorTitle) homeDoctorTitle.innerText = content.homeDoctorTitle || defaultContent.homeDoctorTitle;
-    if (homeDoctorText) homeDoctorText.innerText = content.homeDoctorText || defaultContent.homeDoctorText;
-    if (homeDoctorImage) homeDoctorImage.src = content.homeDoctorImage || defaultContent.homeDoctorImage;
-    if (aboutPageTitle) aboutPageTitle.innerText = content.aboutPageTitle || defaultContent.aboutPageTitle;
-    if (aboutPageText) aboutPageText.innerText = content.aboutPageText || defaultContent.aboutPageText;
-    if (aboutPageImage) aboutPageImage.src = content.aboutPageImage || defaultContent.aboutPageImage;
-    if (teamPageTitle) teamPageTitle.innerText = content.teamPageTitle || defaultContent.teamPageTitle;
-    if (teamPageText) teamPageText.innerText = content.teamPageText || defaultContent.teamPageText;
-    if (teamPageImage) teamPageImage.src = content.teamPageImage || defaultContent.teamPageImage;
-    if (contactPageTitle) contactPageTitle.innerText = content.contactPageTitle || defaultContent.contactPageTitle;
-    if (contactPageText) contactPageText.innerText = content.contactPageText || defaultContent.contactPageText;
-    if (contactPageImage) contactPageImage.src = content.contactPageImage || defaultContent.contactPageImage;
-    if (orderPageTitle) orderPageTitle.innerText = content.orderPageTitle || defaultContent.orderPageTitle;
-    if (orderPageDesc) orderPageDesc.innerText = content.orderPageDesc || defaultContent.orderPageDesc;
-    
-    // We handle orderPagePrice dynamically in the checkboxes now
-    if (orderPageNote) orderPageNote.innerText = content.orderPageNote || defaultContent.orderPageNote;
-
-    const feedbackContainer = document.getElementById('pub-feedback-container');
-    if (!feedbackContainer) return;
-    
-    try {
-        feedbackContainer.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">Loading client stories...</p>';
-        const response = await fetch(`${API_BASE_URL}/api/get-feedbacks?status=approved`);
-        const result = await response.json();
-        const feedbacks = result.feedbacks || [];
-
-        if (feedbacks.length === 0) {
-            feedbackContainer.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No public case notes available yet.</p>';
-            return;
-        }
-
-        feedbackContainer.innerHTML = feedbacks.map(item => {
-            const imageHtml = item.imageUrl 
-                ? `<div style="margin-top:0.75rem;"><img src="${escapeHtml(item.imageUrl)}" alt="Client Result" style="width:100%; border-radius:8px; max-height:200px; object-fit:cover;"></div>` 
-                : '';
-
-            return `
-            <div class="card" style="padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <strong style="color:#0f172a; font-size:1.1rem;">${escapeHtml(item.name || 'Anonymous')}</strong>
-                        <span style="color:#f59e0b; font-size:0.8rem;">★★★★★</span>
-                    </div>
-                    <p style="color:#475569; font-size:0.95rem; line-height:1.6; margin-bottom:1rem;">
-                        "${escapeHtml(item.message)}"
-                    </p>
-                    ${item.productExperience ? `<div style="margin-bottom:0.5rem; font-size:0.85rem; color:#334155;"><strong>Product Experience:</strong> ${escapeHtml(item.productExperience)}</div>` : ''}
-                    ${item.companyExperience ? `<div style="margin-bottom:0.5rem; font-size:0.85rem; color:#334155;"><strong>Natureline Experience:</strong> ${escapeHtml(item.companyExperience)}</div>` : ''}
-                </div>
-                ${imageHtml}
-            </div>
-            `;
-        }).join('');
-    } catch (error) {
-        console.error('Failed to load public feedback:', error);
-        feedbackContainer.innerHTML = '<p style="color:#b91c1c; font-size:0.9rem;">Unable to load stories at this time.</p>';
-    }
-}
-
-// ==========================================
-// 3. DATABASE DYNAMIC CATALOG CODES (NEW)
-// ==========================================
-async function populateProducts() {
-    const checkboxContainer = document.getElementById('productCheckboxes');
-    if (!checkboxContainer) return; // If we aren't on the order page, stop here
-
-    try {
-        // Fetch products directly from your server's database API!
-        const response = await fetch(`${API_BASE_URL}/api/products`);
-        const data = await response.json();
-
-        if (data.success && data.products && data.products.length > 0) {
-            checkboxContainer.innerHTML = ''; // Clear out the loading text
-            
-            // Build a checkbox for each product the admin created in the database
-            data.products.forEach(product => {
-                const label = document.createElement('label');
-                label.style = "display: block; margin-bottom: 0.8rem; cursor: pointer;";
-                label.innerHTML = `
-                    <input type="checkbox" name="products[]" value="${escapeHtml(product.name)}" class="product-checkbox" data-price="${product.price}" onchange="window.calculateTotal()"> 
-                    ${escapeHtml(product.name)} — ₦${Number(product.price).toLocaleString()}
-                `;
-                checkboxContainer.appendChild(label);
-            });
-            
-            // Reset totals to 0 on initial load
-            if(window.calculateTotal) window.calculateTotal(); 
-            
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
         } else {
-            checkboxContainer.innerHTML = '<p style="color:#b91c1c;">No products are currently available in the catalog.</p>';
+            callback(new Error('CORS policy error: Origin not allowed'));
         }
-    } catch (error) {
-        console.error("Failed to load live database products:", error);
-        checkboxContainer.innerHTML = '<p style="color:#b91c1c;">Error communicating with the database. Please refresh the page.</p>';
-    }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+}));
+
+// Handle preflight requests for all routes
+app.options(/(.*)/, cors());
+
+
+
+const PORT = process.env.PORT || 5000;
+const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || 'https://naturelinehealthcare.com/verify-payment';
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
+const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY;
+const firebaseConfigured = Boolean(FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY);
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_NOTIFY_EMAIL;
+const emailConfigured = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && ADMIN_NOTIFY_EMAIL);
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET
+    });
 }
 
-// ==========================================
-// 4. CLIENT INTERACTIVE DIALOGS
-// ==========================================
-async function submitCustomerFeedback(event) {
-    if (event) event.preventDefault();
+function normalizeDoc(doc) {
+    return { id: doc.id, ...doc.data() };
+}
 
-    const nameInput = document.getElementById('feedback-name') || document.getElementById('pub-feedback-name');
-    const emailInput = document.getElementById('feedback-email') || document.getElementById('pub-feedback-email');
-    const msgInput = document.getElementById('feedback-message') || document.getElementById('pub-feedback-text');
+const mailTransporter = emailConfigured
+    ? nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS,
+        }
+    })
+    : null;
 
-    if (!nameInput || !msgInput || !nameInput.value.trim() || !msgInput.value.trim()) {
-        alert('Name and Message fields are required.');
-        return;
+async function notifyAdmin(subject, lines = []) {
+    if (!mailTransporter) {
+        return false;
     }
 
-    const reviewPayload = {
-        name: nameInput.value.trim(),
-        email: emailInput ? emailInput.value.trim() : 'Anonymous Client',
-        rating: 5,
-        message: msgInput.value.trim()
-    };
+    const textBody = lines.filter(Boolean).join('\n');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/submit-feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(reviewPayload)
+        await mailTransporter.sendMail({
+            from: `Natureline Alerts <${SMTP_USER}>`,
+            to: ADMIN_NOTIFY_EMAIL,
+            subject,
+            text: textBody,
         });
-
-        if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
-
-        const result = await response.json();
-        if (result.success) {
-            alert('Feedback sent successfully!');
-            nameInput.value = '';
-            if (emailInput) emailInput.value = '';
-            msgInput.value = '';
-        } else {
-            alert('Server database rejected entry: ' + (result.message || 'Unknown error.'));
-        }
-    } catch (err) {
-        console.error('Network communication fault with backend server:', err);
-        alert('Failed to submit feedback. Please check your internet connection and try again.');
+        return true;
+    } catch (mailError) {
+        console.error('Email notification failed:', mailError.message);
+        return false;
     }
 }
 
-window.submitCustomerFeedback = submitCustomerFeedback;
+async function uploadBufferToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'natureline' },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(result);
+            }
+        );
 
-function openFeedbackModal() {
-    const modal = document.getElementById('feedback-modal');
-    if (modal) modal.classList.remove('hidden');
+        stream.end(buffer);
+    });
 }
 
-function closeFeedbackModal() {
-    const modal = document.getElementById('feedback-modal');
-    if (modal) modal.classList.add('hidden');
-}
+// -------------------------------------------------------------
+// FIREBASE FIRESTORE INITIALIZATION (Embedded Here)
+// -------------------------------------------------------------
+let db = null;
 
-window.openFeedbackModal = openFeedbackModal;
-window.closeFeedbackModal = closeFeedbackModal;
-
-async function submitClientFeedback(event) {
-    if (event) event.preventDefault();
-
-    const nameInput = document.getElementById('fb-client-name');
-    const emailInput = document.getElementById('fb-client-email');
-    const messageInput = document.getElementById('fb-text');
-    const productInput = document.getElementById('fb-product-experience');
-    const companyInput = document.getElementById('fb-company-experience');
-    const imageInput = document.getElementById('fb-result-image');
-
-    const name = nameInput?.value.trim() || '';
-    const email = emailInput?.value.trim() || '';
-    const message = messageInput?.value.trim() || '';
-    const productExperience = productInput?.value.trim() || '';
-    const companyExperience = companyInput?.value.trim() || '';
-
-    if (!name || !message) {
-        alert('Please enter your name and story before submitting.');
-        return;
-    }
-
-    let imageUrl = '';
-    const file = imageInput?.files?.[0];
-
-    try {
-        if (file) {
-            const formData = new FormData();
-            formData.append('image', file);
-
-            const uploadResponse = await fetch(`${API_BASE_URL}/api/upload-image`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!uploadResponse.ok) throw new Error(`Image upload failed with HTTP ${uploadResponse.status}`);
-
-            const uploadResult = await uploadResponse.json();
-            if (!uploadResult.success) throw new Error(uploadResult.message || 'The image could not be uploaded.');
-
-            imageUrl = uploadResult.url || '';
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/submit-feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name, email, message, rating: 5, productExperience, companyExperience, imageUrl
+try {
+    if (firebaseConfigured) {
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: FIREBASE_PROJECT_ID,
+                clientEmail: FIREBASE_CLIENT_EMAIL,
+                privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Formats key text line breaks cleanly
             })
         });
-
-        if (!response.ok) throw new Error(`Feedback submission failed with HTTP ${response.status}`);
-
-        const result = await response.json();
-
-        if (!result.success) {
-            alert(result.message || 'Could not submit your case note.');
-            return;
-        }
-
-        if (nameInput) nameInput.value = '';
-        if (emailInput) emailInput.value = '';
-        if (messageInput) messageInput.value = '';
-        if (productInput) productInput.value = '';
-        if (companyInput) companyInput.value = '';
-        if (imageInput) imageInput.value = '';
-
-        closeFeedbackModal();
-        alert('Thank you! Your case note has been submitted for review.');
-
-        if (typeof renderPublicPage === 'function') {
-            renderPublicPage();
-        }
-
-    } catch (error) {
-        console.error('Feedback submission failed:', error);
-        alert(error.message || 'Could not submit your feedback right now. Please try again later.');
+        db = admin.firestore(); // Creates your database connection variable
+        console.log("Firebase Database engine initialized successfully.");
+    } else {
+        console.warn('Firebase is not configured yet. Database endpoints will return 503 until credentials are added.');
     }
+} catch (fbError) {
+    console.error("Firebase Initialization Error:", fbError.message);
 }
 
-window.submitClientFeedback = submitClientFeedback;
+if (!emailConfigured) {
+    console.warn('Email alerts are not configured yet. Order/feedback notifications will be skipped until SMTP values are complete.');
+}
 
-// ==========================================
-// 5. SECURE PAYSTACK GATEWAY (WITH MULTI-PRODUCTS)
-// ==========================================
-function payWithPaystack() {
-    const name = document.getElementById('order-name')?.value || document.getElementById('paystack-email')?.value || '';
-    const email = document.getElementById('order-email')?.value || document.getElementById('paystack-email')?.value || '';
-    const phone = document.getElementById('order-phone')?.value || '';
-    const deliveryAddress = document.getElementById('order-delivery-address')?.value?.trim() || document.getElementById('order-notes')?.value?.trim() || '';
-    
-    // 1. Validations
-    if (!email || !email.includes('@')) {
-        alert('Please enter a valid email.');
-        return;
-    }
-    if (!deliveryAddress) {
-        alert('Please add a delivery address or notes before continuing.');
-        return;
-    }
-
-    // 2. Check Disclaimer Checkbox
-    const disclaimer = document.getElementById('dosage-disclaimer');
-    if (disclaimer && !disclaimer.checked) {
-        alert('Please check the box to confirm you agree to the dosage and usage terms before proceeding.');
-        return;
-    }
-
-    // 3. Collect Checkboxes
-    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
-    if (checkedBoxes.length === 0) {
-        alert('Please select at least one product from the list.');
-        return;
-    }
-
-    // 4. Set Pricing Data
-    let checkoutAmount = window.currentOrderTotal || 0;
-    let selectedProductName = Array.from(checkedBoxes).map(box => box.value).join(', ');
-
-    // 5. Submit to backend
-    fetch(`${API_BASE_URL}/api/initialize-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email,
-            customerName: name,
-            phoneNumber: phone,
-            deliveryAddress,
-            amount: checkoutAmount,
-            productName: selectedProductName
-        })
-    })
-        .then((response) => response.json())
-        .then((result) => {
-            const authorizationUrl = result?.data?.authorization_url;
-            if (authorizationUrl) {
-                window.location.href = authorizationUrl;
-                return;
-            }
-
-            throw new Error(result?.message || 'Payment initialization failed.');
-        })
-        .catch((error) => {
-            console.error('Backend payment init failed:', error);
-            alert('Payment setup failed. Please confirm the backend server is running and your Paystack key is configured.');
+function requireDatabase(res) {
+    if (!db) {
+        res.status(503).json({
+            success: false,
+            message: 'Firebase is not configured yet. Add the Firebase environment variables to enable this feature.'
         });
-}
-
-// ==========================================
-// 6. GLOBAL LAYOUT LOGICS (MENU/NAV)
-// ==========================================
-function initNavigation() {
-    const toggle = document.querySelector('.menu-toggle');
-    const mobileMenu = document.querySelector('.mobile-menu');
-
-    if (toggle && mobileMenu) {
-        toggle.addEventListener('click', () => {
-            mobileMenu.classList.toggle('active');
-        });
-    }
-}
-
-// ==========================================
-// 7. CHATBOT INTERFACE LOGIC
-// ==========================================
-function getBotReply(message) {
-    const text = message.toLowerCase();
-    const faqMap = [
-        { pattern: ['nafdac', 'approved', 'approval'], reply: 'Yes — our fibroid treatment formulation is NAFDAC approved for non-surgical therapeutic use. All formulations meet strict safety and quality standards.' },
-        { pattern: ['price', 'cost', 'amount', 'payment', 'pay'], reply: 'Our catalog includes multiple Eldora products in the order portal, with prices ranging from ₦15,000 for the Herbal Mixture to ₦45,000 for the Anti Festering Powder.' },
-        { pattern: ['doctor', 'dr', 'team', 'meet'], reply: 'Dr. Williams Adetunji leads our clinical team with expertise in non-surgical fibroid management. Our team provides personalized care and continuous monitoring throughout treatment.' },
-        { pattern: ['contact', 'whatsapp', 'email', 'gmail', 'call', 'phone', 'video'], reply: 'You can contact us through WhatsApp, email, phone, or video consultation from the contact page to discuss your fibroid symptoms and treatment options.' },
-        { pattern: ['fibroid', 'treatment', 'therapy', 'support'], reply: 'We provide non-surgical fibroid treatment using botanical formulation combined with clinical monitoring. Our approach is designed to reduce fibroid symptoms and improve uterine health without surgery.' },
-        { pattern: ['hours', 'open', 'available', 'time'], reply: 'Our clinical team is available during office hours for consultations and can assist with urgent questions through our contact channels.' },
-        { pattern: ['order', 'buy', 'book', 'consultation'], reply: 'You can schedule your clinical assessment and begin the fibroid treatment pathway through our secure order page. After payment, our team will contact you to confirm.' },
-        { pattern: ['hello', 'hi', 'help'], reply: 'Hello! I can assist with fibroid treatment information, pricing, NAFDAC approval details, our clinical team, contact options, and scheduling your consultation.' }
-    ];
-
-    for (const item of faqMap) {
-        if (item.pattern.some((phrase) => text.includes(phrase))) {
-            return item.reply;
-        }
+        return false;
     }
 
-    return 'Thank you for reaching out. I can help with non-surgical fibroid treatment details, pricing, clinical team information, contact options, and consultation scheduling.';
+    return true;
 }
 
-function initChatbot() {
-    const toggle = document.getElementById('chat-toggle');
-    const panel = document.getElementById('chat-panel');
-    const messages = document.getElementById('chat-messages');
-    const input = document.getElementById('chat-input');
-    const sendButton = document.getElementById('chat-send');
+// -------------------------------------------------------------
+// STATIC WEBSITE PAGES ROUTING
+// -------------------------------------------------------------
 
-    if (!toggle || !panel || !messages || !input || !sendButton) return;
-
-    const addMessage = (text, role) => {
-        const bubble = document.createElement('div');
-        bubble.className = `chat-bubble ${role}`;
-        bubble.textContent = text;
-        messages.appendChild(bubble);
-        messages.scrollTop = messages.scrollHeight;
-    };
-
-    toggle.addEventListener('click', () => {
-        panel.classList.toggle('open');
-        if (panel.classList.contains('open')) {
-            input.focus();
-        }
-    });
-
-    messages.innerHTML = '';
-    addMessage('Hello! I can help with treatment details, contact options, doctor information, and pricing.', 'bot');
-
-    const submit = () => {
-        const value = input.value.trim();
-        if (!value) return;
-        addMessage(value, 'user');
-        input.value = '';
-        window.setTimeout(() => {
-            addMessage(getBotReply(value), 'bot');
-        }, 400);
-    };
-
-    sendButton.addEventListener('click', submit);
-    input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            submit();
-        }
-    });
-}
-
-// ==========================================
-// 8. APP BOOTSTRAP INITIALIZATION
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    renderPublicPage();
-    populateProducts(); // Now successfully fetches from Firebase!
-    initNavigation();
-    initChatbot();
+// Admin route (before static middleware)
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
+
+app.get('/order', (req, res) => {
+    res.sendFile(path.join(__dirname, 'order.html'));
+});
+
+app.get('/favicon.ico', (req, res) => {
+    res.type('image/jpeg');
+    res.sendFile(path.join(__dirname, 'images', 'images', 'logo.jpeg'));
+});
+
+app.get('/verify-payment', (req, res) => {
+    res.status(200).send(`
+        <html>
+            <head><title>Payment verification</title></head>
+            <body style="font-family:system-ui;padding:2rem;max-width:720px;margin:0 auto;">
+                <h1>Payment received</h1>
+                <p>Thanks for your order. Your payment was initiated successfully and our team will confirm it shortly.</p>
+                <p><a href="/order">Return to the order page</a></p>
+            </body>
+        </html>
+    `);
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
+
+// -------------------------------------------------------------
+// DATABASE & PAYMENT API ENDPOINTS
+// -------------------------------------------------------------
+
+// 1. Endpoint to Save Website Layout/Text Edits to Firebase
+app.post('/api/save-content', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const webpageData = req.body;
+        // Saves layout details under a document named 'natureline_content' inside a 'website' collection
+        await db.collection('website').doc('natureline_content').set(webpageData, { merge: true });
+        return res.status(200).json({ success: true, message: 'Content saved to database successfully!' });
+    } catch (error) {
+        console.error('Firebase Save Error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to write content to database.' });
+    }
+});
+
+// Image upload endpoint via Multer + Cloudinary
+app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file was uploaded.' });
+        }
+
+        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+            return res.status(400).json({ success: false, message: 'Cloudinary is not configured.' });
+        }
+
+        const result = await uploadBufferToCloudinary(req.file.buffer);
+        return res.status(200).json({ success: true, url: result.secure_url });
+    } catch (error) {
+        console.error('Cloudinary upload error:', error.message);
+        return res.status(500).json({ success: false, message: 'Could not upload the image.' });
+    }
+});
+
+// 2. Endpoint to Fetch Website Layout Data
+app.get('/api/get-content', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const doc = await db.collection('website').doc('natureline_content').get();
+        if (!doc.exists) {
+            return res.status(200).json({}); // Return empty layout if database is brand new
+        }
+        return res.status(200).json(doc.data());
+    } catch (error) {
+        console.error('Firebase Fetch Error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to read content from database.' });
+    }
+});
+
+// 3. Endpoint to Save Customer Feedback Form Submissions
+app.post('/api/submit-feedback', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const { name, email, rating, message, productExperience, companyExperience, imageUrl } = req.body;
+
+        if (!name || !message) {
+            return res.status(400).json({ success: false, message: 'Customer name and feedback message are required.' });
+        }
+
+        // Saves individual customer reviews into a collection called 'feedbacks' with a timestamp
+        const docRef = await db.collection('feedbacks').add({
+            name,
+            email: email || 'Anonymous',
+            rating: rating || 5,
+            message,
+            productExperience: productExperience || '',
+            companyExperience: companyExperience || '',
+            imageUrl: imageUrl || '',
+            status: 'pending',
+            submittedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        notifyAdmin('New feedback submitted on Natureline', [
+            `Feedback ID: ${docRef.id}`,
+            `Name: ${name}`,
+            `Email: ${email || 'Anonymous'}`,
+            `Message: ${message}`,
+            `Product Experience: ${productExperience || 'N/A'}`,
+            `Company Experience: ${companyExperience || 'N/A'}`
+        ]).catch(() => {});
+
+        return res.status(200).json({ success: true, message: 'Feedback stored successfully!', id: docRef.id });
+    } catch (error) {
+        console.error('Feedback Save Error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to save customer review.' });
+    }
+});
+
+app.get('/api/get-feedbacks', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const status = String(req.query.status || 'all').toLowerCase();
+        const snapshot = await db.collection('feedbacks').orderBy('submittedAt', 'desc').get();
+        let feedbacks = snapshot.docs.map(normalizeDoc);
+
+        if (status !== 'all') {
+            feedbacks = feedbacks.filter((item) => String(item.status || 'pending').toLowerCase() === status);
+        }
+
+        return res.status(200).json({ success: true, feedbacks });
+    } catch (error) {
+        console.error('Feedback fetch error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to fetch feedback.' });
+    }
+});
+
+app.post('/api/feedbacks/:id/review', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const { id } = req.params;
+        const { action } = req.body;
+        const status = action === 'approve' ? 'approved' : action === 'deny' ? 'denied' : null;
+
+        if (!status) {
+            return res.status(400).json({ success: false, message: 'Invalid review action.' });
+        }
+
+        await db.collection('feedbacks').doc(id).set({ status }, { merge: true });
+        return res.status(200).json({ success: true, message: `Feedback ${status}.` });
+    } catch (error) {
+        console.error('Feedback review error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to update feedback status.' });
+    }
+});
+
+app.get('/api/products', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const snapshot = await db.collection('products').orderBy('createdAt', 'asc').get();
+        const products = snapshot.docs.map(normalizeDoc);
+        return res.status(200).json({ success: true, products });
+    } catch (error) {
+        console.error('Product fetch error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to fetch products.' });
+    }
+});
+
+app.post('/api/products', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const { name, price } = req.body;
+        if (!name || !Number.isFinite(Number(price)) || Number(price) <= 0) {
+            return res.status(400).json({ success: false, message: 'A valid product name and price are required.' });
+        }
+
+        const docRef = await db.collection('products').add({
+            name: String(name).trim(),
+            price: Number(price),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.status(200).json({ success: true, id: docRef.id });
+    } catch (error) {
+        console.error('Product create error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to add product.' });
+    }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        await db.collection('products').doc(req.params.id).delete();
+        return res.status(200).json({ success: true, message: 'Product deleted.' });
+    } catch (error) {
+        console.error('Product delete error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to delete product.' });
+    }
+});
+
+app.get('/api/orders', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const snapshot = await db.collection('orders').orderBy('orderDate', 'desc').get();
+        const orders = snapshot.docs.map(normalizeDoc);
+        return res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error('Order fetch error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+// 4. Secure Endpoint to Initialize Paystack Transaction & Track the Order in Firebase
+app.post('/api/initialize-payment', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    if (!PAYSTACK_SECRET) {
+        return res.status(503).json({
+            success: false,
+            message: 'Paystack is not configured yet. Add PAYSTACK_SECRET_KEY to enable checkout.'
+        });
+    }
+
+    const { email, customerName, phoneNumber, deliveryAddress, amount, productName } = req.body;
+    const fixedAmountNaira = Number(amount) > 0 ? Number(amount) : 35000;
+
+    if (!email || !customerName || !deliveryAddress) {
+        return res.status(400).json({ success: false, message: 'Customer parameters (email, name, deliveryAddress) are mandatory.' });
+    }
+
+    try {
+        // Send payment initialization to Paystack
+        const paystackResponse = await axios.post(
+            'https://api.paystack.co/transaction/initialize',
+            {
+                email,
+                amount: fixedAmountNaira * 100, // Converted to Kobo
+                callback_url: PAYSTACK_CALLBACK_URL
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${PAYSTACK_SECRET}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        // Extract transaction reference code generated by Paystack
+        const reference = paystackResponse.data.data.reference;
+
+        // Log the structural order details into an 'orders' collection matching Paystack's reference
+        await db.collection('orders').doc(reference).set({
+            customerName,
+            email,
+            phoneNumber: phoneNumber || 'N/A',
+            deliveryAddress,
+            productName: productName || 'Selected Eldora product',
+            amount: fixedAmountNaira,
+            paymentStatus: 'pending', // Keeps status as pending until verified
+            orderDate: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        notifyAdmin('New order initialized on Natureline', [
+            `Reference: ${reference}`,
+            `Customer: ${customerName}`,
+            `Email: ${email}`,
+            `Phone: ${phoneNumber || 'N/A'}`,
+            `Product: ${productName || 'Selected Eldora product'}`,
+            `Amount (NGN): ${fixedAmountNaira}`,
+            `Delivery Address: ${deliveryAddress}`,
+            'Payment Status: pending'
+        ]).catch(() => {});
+
+        return res.status(200).json(paystackResponse.data);
+    } catch (error) {
+        console.error('Paystack/Firebase Order Error Log:', error.response ? error.response.data : error.message);
+        return res.status(500).json({ success: false, message: 'Internal payment or database infrastructure fault.' });
+    }
+});
+
+// Endpoint to verify Admin login securely via .env configurations
+app.post('/api/admin-login', (req, res) => {
+    const { username, password } = req.body;
+    
+    const correctUsername = process.env.ADMIN_USERNAME || 'natureline';
+    const correctPassword = process.env.ADMIN_PASSWORD || 'admin2026';
+
+    if (username === correctUsername && password === correctPassword) {
+        return res.status(200).json({ success: true, message: "Authenticated successfully." });
+    } else {
+        return res.status(401).json({ success: false, message: "Invalid admin parameters." });
+    }
+});
+
+// Start listening safely
+app.listen(PORT, () => {
+    console.log(`Natureline Medical Secure Engine running optimally on port ${PORT}`);
+});
+
+
+
+
