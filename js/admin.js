@@ -320,20 +320,56 @@ async function renderAdminOrders() {
             return;
         }
 
-        container.innerHTML = orders.map((order) => `
-            <div style="padding:0.75rem;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:0.5rem;">
-                <strong>${order.customerName || 'Customer'}</strong>
-                <span style="float:right;font-size:0.85rem;color:${order.paymentStatus === 'paid' ? '#0D7A39' : '#b45309'};">
-                    ${order.paymentStatus || 'pending'}
-                </span>
-                <p style="margin:0.35rem 0 0;color:#475569;">
-                    ${order.productName || 'Treatment'} — ₦${Number(order.amount || 0).toLocaleString()}
+        container.innerHTML = orders.map((order) => {
+            const status = (order.paymentStatus || order.status || 'pending').toLowerCase();
+            const isCompleted = status === 'completed' || status === 'paid';
+            const statusColor = isCompleted ? '#0D7A39' : '#b45309';
+            const referenceKey = order.reference || order.id;
+
+            return `
+            <div style="padding:0.85rem;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:0.75rem;background:#fff;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <strong style="color:#1e293b;">${escapeAdminHtml(order.customerName || 'Customer')}</strong>
+                    <span style="font-size:0.75rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:12px;background:${isCompleted ? '#d1fae5' : '#fef3c7'};color:${statusColor};text-transform:uppercase;">
+                        ${isCompleted ? 'Completed' : 'Pending'}
+                    </span>
+                </div>
+                <p style="margin:0.35rem 0;color:#475569;font-size:0.9rem;">
+                    ${escapeAdminHtml(order.productName || 'Treatment')} — <strong style="color:#0D7A39;">₦${Number(order.amount || 0).toLocaleString()}</strong>
                 </p>
-                <p style="margin:0.2rem 0 0;font-size:0.8rem;color:#94a3b8;">${order.email || ''} · ${order.reference || order.id || ''}</p>
-            </div>
-        `).join('');
+                <p style="margin:0;font-size:0.78rem;color:#94a3b8;">${escapeAdminHtml(order.email || '')} · Ref: ${escapeAdminHtml(referenceKey)}</p>
+                
+                ${!isCompleted ? `
+                    <button onclick="markOrderCompleted('${escapeAdminHtml(referenceKey)}')" style="margin-top:0.6rem;background:#0D7A39;color:white;border:none;padding:0.35rem 0.7rem;border-radius:4px;font-size:0.75rem;font-weight:600;cursor:pointer;">
+                        Mark as Completed (Cash/Manual)
+                    </button>
+                ` : '<div style="margin-top:0.4rem;font-size:0.75rem;color:#0D7A39;font-weight:600;">✓ Payment Verified / Completed</div>'}
+            </div>`;
+        }).join('');
     } catch (error) {
         container.innerHTML = '<p style="color:red;">Could not load orders.</p>';
+    }
+}
+
+// Function for admin to manually change order status (e.g. for cash payments)
+async function markOrderCompleted(reference) {
+    if (!reference) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(reference)}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'completed' })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            renderAdminOrders();
+        } else {
+            alert(result.message || 'Failed to update order status.');
+        }
+    } catch (error) {
+        alert('Could not update order status. Is the server running?');
     }
 }
 
@@ -342,7 +378,6 @@ async function renderAdminOrders() {
 // DYNAMIC PRODUCT CATALOG MANAGEMENT
 // ==========================================
 
-// 1. Fetch and display products in the admin panel
 async function loadAdminProducts() {
     const listContainer = document.getElementById('admin-product-list');
     if (!listContainer) return;
@@ -356,7 +391,7 @@ async function loadAdminProducts() {
         if (data.success && data.products && data.products.length > 0) {
             listContainer.innerHTML = data.products.map(product => `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #334155;">${escapeHtml(product.name)} — ₦${Number(product.price).toLocaleString()}</span>
+                    <span style="font-weight: 600; color: #334155;">${escapeAdminHtml(product.name)} — ₦${Number(product.price).toLocaleString()}</span>
                     <button onclick="deleteProduct('${product.id}')" style="background: #b91c1c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete</button>
                 </div>
             `).join('');
@@ -369,7 +404,6 @@ async function loadAdminProducts() {
     }
 }
 
-// 2. Add a new product to the database
 async function addNewProduct() {
     const nameInput = document.getElementById('admin-prod-name');
     const priceInput = document.getElementById('admin-prod-price');
@@ -392,10 +426,8 @@ async function addNewProduct() {
         const data = await response.json();
         
         if (data.success) {
-            // Clear the inputs
             nameInput.value = '';
             priceInput.value = '';
-            // Refresh the list immediately
             loadAdminProducts();
             alert("Product added successfully!");
         } else {
@@ -407,7 +439,6 @@ async function addNewProduct() {
     }
 }
 
-// 3. Delete a product from the database
 async function deleteProduct(productId) {
     if (!confirm("Are you sure you want to delete this product from the catalog?")) {
         return;
@@ -421,7 +452,7 @@ async function deleteProduct(productId) {
         const data = await response.json();
         
         if (data.success) {
-            loadAdminProducts(); // Refresh the list
+            loadAdminProducts();
         } else {
             alert(data.message || "Failed to delete product.");
         }
@@ -431,16 +462,14 @@ async function deleteProduct(productId) {
     }
 }
 
-// Ensure the catalog loads when the admin dashboard is opened
 document.addEventListener('DOMContentLoaded', () => {
-    // If we are on the admin page and logged in, load the products
     const dashboard = document.getElementById('dashboard-container');
     if (dashboard) {
-        // Create an observer to load products when dashboard becomes visible after login
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.target.style.display !== 'none') {
                     loadAdminProducts();
+                    renderAdminOrders();
                 }
             });
         });
@@ -454,3 +483,4 @@ window.savePageContent = savePageContent;
 window.addNewProduct = addNewProduct;
 window.deleteProduct = deleteProduct;
 window.reviewFeedback = reviewFeedback;
+window.markOrderCompleted = markOrderCompleted;

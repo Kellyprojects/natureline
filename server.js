@@ -9,7 +9,7 @@ const nodemailer = require('nodemailer');
 const admin = require('firebase-admin'); // Added Firebase SDK
 require('dotenv').config();
 
-// Initialize Express app (THIS WAS MISSING!)
+// Initialize Express app
 const app = express();
 
 // Middleware
@@ -27,7 +27,6 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -42,11 +41,9 @@ app.use(cors({
 // Handle preflight requests for all routes
 app.options(/(.*)/, cors());
 
-
-
 const PORT = process.env.PORT || 5000;
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || 'https://naturelinehealthcare.com/verify-payment';
+const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || 'https://natureline.onrender.com/verify-payment';
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
 const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
 const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY;
@@ -55,8 +52,8 @@ const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_NOTIFY_EMAIL;
-const emailConfigured = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && ADMIN_NOTIFY_EMAIL);
+const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || 'williamsadetunji63@gmail.com';
+const emailConfigured = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS);
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -86,6 +83,7 @@ const mailTransporter = emailConfigured
 
 async function notifyAdmin(subject, lines = []) {
     if (!mailTransporter) {
+        console.warn('Mail transporter not configured, email notification skipped.');
         return false;
     }
 
@@ -123,7 +121,7 @@ async function uploadBufferToCloudinary(buffer) {
 }
 
 // -------------------------------------------------------------
-// FIREBASE FIRESTORE INITIALIZATION (Embedded Here)
+// FIREBASE FIRESTORE INITIALIZATION
 // -------------------------------------------------------------
 let db = null;
 
@@ -133,31 +131,26 @@ try {
             credential: admin.credential.cert({
                 projectId: FIREBASE_PROJECT_ID,
                 clientEmail: FIREBASE_CLIENT_EMAIL,
-                privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Formats key text line breaks cleanly
+                privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
             })
         });
-        db = admin.firestore(); // Creates your database connection variable
+        db = admin.firestore();
         console.log("Firebase Database engine initialized successfully.");
     } else {
-        console.warn('Firebase is not configured yet. Database endpoints will return 503 until credentials are added.');
+        console.warn('Firebase is not configured yet.');
     }
 } catch (fbError) {
     console.error("Firebase Initialization Error:", fbError.message);
-}
-
-if (!emailConfigured) {
-    console.warn('Email alerts are not configured yet. Order/feedback notifications will be skipped until SMTP values are complete.');
 }
 
 function requireDatabase(res) {
     if (!db) {
         res.status(503).json({
             success: false,
-            message: 'Firebase is not configured yet. Add the Firebase environment variables to enable this feature.'
+            message: 'Firebase is not configured yet.'
         });
         return false;
     }
-
     return true;
 }
 
@@ -165,7 +158,6 @@ function requireDatabase(res) {
 // STATIC WEBSITE PAGES ROUTING
 // -------------------------------------------------------------
 
-// Admin route (before static middleware)
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -179,13 +171,90 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'images', 'images', 'logo.jpeg'));
 });
 
-app.get('/verify-payment', (req, res) => {
-    res.status(200).send(`
+// Paystack Callback & Verification Route
+app.get('/verify-payment', async (req, res) => {
+    const reference = req.query.reference;
+    
+    if (!reference || !db) {
+        return res.status(200).send(`
+            <html>
+                <head><title>Payment verification</title></head>
+                <body style="font-family:system-ui;padding:2rem;max-width:720px;margin:0 auto;">
+                    <h1>Payment reference missing</h1>
+                    <p>Could not verify transaction parameters.</p>
+                    <p><a href="/order">Return to the order page</a></p>
+                </body>
+            </html>
+        `);
+    }
+
+    try {
+        // Verify transaction with Paystack API
+        const verificationResponse = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
+            headers: {
+                Authorization: `Bearer ${PAYSTACK_SECRET}`
+            }
+        });
+
+        const paymentData = verificationResponse.data;
+
+        if (paymentData && paymentData.status && paymentData.data.status === 'success') {
+            const txDetails = paymentData.data;
+            const amountPaidNaira = txDetails.amount / 100;
+
+            // Update order status to 'completed' in Firebase
+            const orderRef = db.collection('orders').doc(reference);
+            const orderDoc = await orderRef.get();
+
+            let customerName = 'Customer';
+            let productName = 'Selected Eldora product';
+            let customerEmail = txDetails.customer.email;
+
+            if (orderDoc.exists) {
+                const orderData = orderDoc.data();
+                customerName = orderData.customerName || customerName;
+                productName = orderData.productName || productName;
+                customerEmail = orderData.email || customerEmail;
+
+                await orderRef.set({
+                    paymentStatus: 'completed',
+                    status: 'completed'
+                }, { merge: true });
+            }
+
+            // Send Email Notification to williamsadetunji63@gmail.com
+            await notifyAdmin(`New Paid Order Completed - Ref: ${reference}`, [
+                `--- NEW PAYSTACK PAYMENT CONFIRMED ---`,
+                `Order Number / Reference: ${reference}`,
+                `Customer Name: ${customerName}`,
+                `Customer Email: ${customerEmail}`,
+                `Drugs and Quantity: ${productName}`,
+                `Price Paid: ₦${amountPaidNaira.toLocaleString()}`,
+                `Payment Status: COMPLETED (Paid via Paystack)`
+            ]);
+
+            return res.status(200).send(`
+                <html>
+                    <head><title>Payment Successful</title></head>
+                    <body style="font-family:system-ui;padding:2rem;max-width:720px;margin:0 auto;text-align:center;">
+                        <h1 style="color:#0D7A39;">Payment Successful & Verified!</h1>
+                        <p>Thank you, ${customerName}. Your payment of ₦${amountPaidNaira.toLocaleString()} has been confirmed automatically via Paystack.</p>
+                        <p>An email notification has been sent to the store administrator.</p>
+                        <p><a href="/order" style="background:#0D7A39;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:1rem;">Return to Store</a></p>
+                    </body>
+                </html>
+            `);
+        }
+    } catch (err) {
+        console.error('Payment verification fault:', err.message);
+    }
+
+    return res.status(200).send(`
         <html>
-            <head><title>Payment verification</title></head>
+            <head><title>Payment verification pending</title></head>
             <body style="font-family:system-ui;padding:2rem;max-width:720px;margin:0 auto;">
-                <h1>Payment received</h1>
-                <p>Thanks for your order. Your payment was initiated successfully and our team will confirm it shortly.</p>
+                <h1>Payment verification pending</h1>
+                <p>We received your request, but verification is still processing or pending confirmation.</p>
                 <p><a href="/order">Return to the order page</a></p>
             </body>
         </html>
@@ -199,19 +268,15 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-
-
 // -------------------------------------------------------------
 // DATABASE & PAYMENT API ENDPOINTS
 // -------------------------------------------------------------
 
-// 1. Endpoint to Save Website Layout/Text Edits to Firebase
 app.post('/api/save-content', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     try {
         const webpageData = req.body;
-        // Saves layout details under a document named 'natureline_content' inside a 'website' collection
         await db.collection('website').doc('natureline_content').set(webpageData, { merge: true });
         return res.status(200).json({ success: true, message: 'Content saved to database successfully!' });
     } catch (error) {
@@ -220,17 +285,11 @@ app.post('/api/save-content', async (req, res) => {
     }
 });
 
-// Image upload endpoint via Multer + Cloudinary
 app.post('/api/upload-image', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No image file was uploaded.' });
         }
-
-        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-            return res.status(400).json({ success: false, message: 'Cloudinary is not configured.' });
-        }
-
         const result = await uploadBufferToCloudinary(req.file.buffer);
         return res.status(200).json({ success: true, url: result.secure_url });
     } catch (error) {
@@ -239,34 +298,30 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
     }
 });
 
-// 2. Endpoint to Fetch Website Layout Data
 app.get('/api/get-content', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     try {
         const doc = await db.collection('website').doc('natureline_content').get();
         if (!doc.exists) {
-            return res.status(200).json({}); // Return empty layout if database is brand new
+            return res.status(200).json({});
         }
         return res.status(200).json(doc.data());
     } catch (error) {
         console.error('Firebase Fetch Error:', error.message);
-        return res.status(500).json({ success: false, message: 'Failed to read content from database.' });
+        return res.status(500).json({ success: false, message: 'Failed to read content.' });
     }
 });
 
-// 3. Endpoint to Save Customer Feedback Form Submissions
 app.post('/api/submit-feedback', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     try {
         const { name, email, rating, message, productExperience, companyExperience, imageUrl } = req.body;
-
         if (!name || !message) {
-            return res.status(400).json({ success: false, message: 'Customer name and feedback message are required.' });
+            return res.status(400).json({ success: false, message: 'Name and message required.' });
         }
 
-        // Saves individual customer reviews into a collection called 'feedbacks' with a timestamp
         const docRef = await db.collection('feedbacks').add({
             name,
             email: email || 'Anonymous',
@@ -282,16 +337,12 @@ app.post('/api/submit-feedback', async (req, res) => {
         notifyAdmin('New feedback submitted on Natureline', [
             `Feedback ID: ${docRef.id}`,
             `Name: ${name}`,
-            `Email: ${email || 'Anonymous'}`,
-            `Message: ${message}`,
-            `Product Experience: ${productExperience || 'N/A'}`,
-            `Company Experience: ${companyExperience || 'N/A'}`
+            `Message: ${message}`
         ]).catch(() => {});
 
-        return res.status(200).json({ success: true, message: 'Feedback stored successfully!', id: docRef.id });
+        return res.status(200).json({ success: true, id: docRef.id });
     } catch (error) {
-        console.error('Feedback Save Error:', error.message);
-        return res.status(500).json({ success: false, message: 'Failed to save customer review.' });
+        return res.status(500).json({ success: false, message: 'Failed to save review.' });
     }
 });
 
@@ -309,7 +360,6 @@ app.get('/api/get-feedbacks', async (req, res) => {
 
         return res.status(200).json({ success: true, feedbacks });
     } catch (error) {
-        console.error('Feedback fetch error:', error.message);
         return res.status(500).json({ success: false, message: 'Failed to fetch feedback.' });
     }
 });
@@ -323,14 +373,13 @@ app.post('/api/feedbacks/:id/review', async (req, res) => {
         const status = action === 'approve' ? 'approved' : action === 'deny' ? 'denied' : null;
 
         if (!status) {
-            return res.status(400).json({ success: false, message: 'Invalid review action.' });
+            return res.status(400).json({ success: false, message: 'Invalid action.' });
         }
 
         await db.collection('feedbacks').doc(id).set({ status }, { merge: true });
-        return res.status(200).json({ success: true, message: `Feedback ${status}.` });
+        return res.status(200).json({ success: true });
     } catch (error) {
-        console.error('Feedback review error:', error.message);
-        return res.status(500).json({ success: false, message: 'Failed to update feedback status.' });
+        return res.status(500).json({ success: false, message: 'Failed to update review status.' });
     }
 });
 
@@ -342,7 +391,6 @@ app.get('/api/products', async (req, res) => {
         const products = snapshot.docs.map(normalizeDoc);
         return res.status(200).json({ success: true, products });
     } catch (error) {
-        console.error('Product fetch error:', error.message);
         return res.status(500).json({ success: false, message: 'Failed to fetch products.' });
     }
 });
@@ -352,8 +400,8 @@ app.post('/api/products', async (req, res) => {
 
     try {
         const { name, price } = req.body;
-        if (!name || !Number.isFinite(Number(price)) || Number(price) <= 0) {
-            return res.status(400).json({ success: false, message: 'A valid product name and price are required.' });
+        if (!name || Number(price) <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid product details.' });
         }
 
         const docRef = await db.collection('products').add({
@@ -364,7 +412,6 @@ app.post('/api/products', async (req, res) => {
 
         return res.status(200).json({ success: true, id: docRef.id });
     } catch (error) {
-        console.error('Product create error:', error.message);
         return res.status(500).json({ success: false, message: 'Failed to add product.' });
     }
 });
@@ -374,9 +421,8 @@ app.delete('/api/products/:id', async (req, res) => {
 
     try {
         await db.collection('products').doc(req.params.id).delete();
-        return res.status(200).json({ success: true, message: 'Product deleted.' });
+        return res.status(200).json({ success: true });
     } catch (error) {
-        console.error('Product delete error:', error.message);
         return res.status(500).json({ success: false, message: 'Failed to delete product.' });
     }
 });
@@ -389,19 +435,42 @@ app.get('/api/orders', async (req, res) => {
         const orders = snapshot.docs.map(normalizeDoc);
         return res.status(200).json({ success: true, orders });
     } catch (error) {
-        console.error('Order fetch error:', error.message);
         return res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
     }
 });
 
-// 4. Secure Endpoint to Initialize Paystack Transaction & Track the Order in Firebase
+// Endpoint for Admin to manually change order status (e.g. cash payments)
+app.post('/api/orders/:reference/status', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const { reference } = req.params;
+        const { status } = req.body; // expected 'completed' or 'pending'
+
+        if (!status) {
+            return res.status(400).json({ success: false, message: 'Status is required.' });
+        }
+
+        await db.collection('orders').doc(reference).set({
+            paymentStatus: status,
+            status: status
+        }, { merge: true });
+
+        return res.status(200).json({ success: true, message: 'Order status updated successfully.' });
+    } catch (error) {
+        console.error('Update order status error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to update order status.' });
+    }
+});
+
+// Initialize Paystack Transaction & Track Order in Firebase
 app.post('/api/initialize-payment', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     if (!PAYSTACK_SECRET) {
         return res.status(503).json({
             success: false,
-            message: 'Paystack is not configured yet. Add PAYSTACK_SECRET_KEY to enable checkout.'
+            message: 'Paystack secret key is not configured.'
         });
     }
 
@@ -409,16 +478,15 @@ app.post('/api/initialize-payment', async (req, res) => {
     const fixedAmountNaira = Number(amount) > 0 ? Number(amount) : 35000;
 
     if (!email || !customerName || !deliveryAddress) {
-        return res.status(400).json({ success: false, message: 'Customer parameters (email, name, deliveryAddress) are mandatory.' });
+        return res.status(400).json({ success: false, message: 'Customer details are mandatory.' });
     }
 
     try {
-        // Send payment initialization to Paystack
         const paystackResponse = await axios.post(
             'https://api.paystack.co/transaction/initialize',
             {
                 email,
-                amount: fixedAmountNaira * 100, // Converted to Kobo
+                amount: fixedAmountNaira * 100, // Kobo conversion
                 callback_url: PAYSTACK_CALLBACK_URL
             },
             {
@@ -429,10 +497,9 @@ app.post('/api/initialize-payment', async (req, res) => {
             }
         );
 
-        // Extract transaction reference code generated by Paystack
         const reference = paystackResponse.data.data.reference;
 
-        // Log the structural order details into an 'orders' collection matching Paystack's reference
+        // Save order as pending initially
         await db.collection('orders').doc(reference).set({
             customerName,
             email,
@@ -440,32 +507,34 @@ app.post('/api/initialize-payment', async (req, res) => {
             deliveryAddress,
             productName: productName || 'Selected Eldora product',
             amount: fixedAmountNaira,
-            paymentStatus: 'pending', // Keeps status as pending until verified
+            paymentStatus: 'pending',
+            status: 'pending',
             orderDate: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        notifyAdmin('New order initialized on Natureline', [
-            `Reference: ${reference}`,
-            `Customer: ${customerName}`,
-            `Email: ${email}`,
-            `Phone: ${phoneNumber || 'N/A'}`,
-            `Product: ${productName || 'Selected Eldora product'}`,
-            `Amount (NGN): ${fixedAmountNaira}`,
+        // Send notification email to williamsadetunji63@gmail.com upon order creation
+        notifyAdmin(`New Order Initialized - Ref: ${reference}`, [
+            `--- NEW ORDER PLACED ---`,
+            `Order Number / Reference: ${reference}`,
+            `Customer Name: ${customerName}`,
+            `Customer Email: ${email}`,
+            `Phone Number: ${phoneNumber || 'N/A'}`,
+            `Drugs and Quantity: ${productName || 'Selected Eldora product'}`,
+            `Price Paid / Total: ₦${fixedAmountNaira.toLocaleString()}`,
             `Delivery Address: ${deliveryAddress}`,
-            'Payment Status: pending'
+            `Payment Status: PENDING (Waiting for online or cash confirmation)`
         ]).catch(() => {});
 
         return res.status(200).json(paystackResponse.data);
     } catch (error) {
-        console.error('Paystack/Firebase Order Error Log:', error.response ? error.response.data : error.message);
-        return res.status(500).json({ success: false, message: 'Internal payment or database infrastructure fault.' });
+        console.error('Paystack/Firebase Order Error:', error.response ? error.response.data : error.message);
+        return res.status(500).json({ success: false, message: 'Payment initialization error.' });
     }
 });
 
-// Endpoint to verify Admin login securely via .env configurations
+// Admin login endpoint
 app.post('/api/admin-login', (req, res) => {
     const { username, password } = req.body;
-    
     const correctUsername = process.env.ADMIN_USERNAME || 'natureline';
     const correctPassword = process.env.ADMIN_PASSWORD || 'admin2026';
 
@@ -476,11 +545,6 @@ app.post('/api/admin-login', (req, res) => {
     }
 });
 
-// Start listening safely
 app.listen(PORT, () => {
     console.log(`Natureline Medical Secure Engine running optimally on port ${PORT}`);
 });
-
-
-
-
