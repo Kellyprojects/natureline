@@ -324,6 +324,7 @@ async function renderAdminOrders() {
             const status = (order.paymentStatus || order.status || 'pending').toLowerCase();
             const isCompleted = status === 'completed' || status === 'paid';
             const statusColor = isCompleted ? '#0D7A39' : '#b45309';
+            // Fallback to order.id if reference is missing
             const referenceKey = order.reference || order.id;
 
             return `
@@ -355,13 +356,16 @@ async function renderAdminOrders() {
 async function markOrderCompleted(reference) {
     if (!reference) return;
 
+    if (!confirm("Are you sure you want to mark this order as completed?")) return;
+
     try {
-        const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(reference)}/status`, {
+        const response = classFetchWithFallback = `${API_BASE_URL}/api/orders/${encodeURIComponent(reference)}/status`;
+        const responseObj = await fetch(response, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'completed' })
         });
-        const result = await response.json();
+        const result = await responseObj.json();
 
         if (result.success) {
             renderAdminOrders();
@@ -372,7 +376,6 @@ async function markOrderCompleted(reference) {
         alert('Could not update order status. Is the server running?');
     }
 }
-
 
 // ==========================================
 // DYNAMIC PRODUCT CATALOG MANAGEMENT
