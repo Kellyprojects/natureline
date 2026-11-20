@@ -69,6 +69,37 @@ function normalizeDoc(doc) {
     return { id: doc.id, ...doc.data() };
 }
 
+const defaultCatalogProducts = [
+    { id: 'p1', name: 'Eldora Hormexol hormone booster — 250 ml', price: 18500, imageUrl: 'images/images/eldora.jpeg', description: 'Eldora Hormexol product, 250 ml. Please review the product packaging and consult a qualified health professional before use.' },
+    { id: 'p2', name: 'Eldora Enervate tablets — 30 tablets', price: 25000, imageUrl: 'images/images/eldora1.jpeg', description: 'Eldora Enervate product, pack of 30 tablets. Please review the product packaging and consult a qualified health professional before use.' },
+    { id: 'p3', name: 'Eldora Anti Festering Powder — 100 g', price: 45000, imageUrl: 'images/images/canvaeldora.png', description: 'Eldora Anti Festering Powder, 100 g. Please review the product packaging and consult a qualified health professional before use.' },
+    { id: 'p4', name: 'Eldora Herbal Tablet — 30 tablets', price: 28500, imageUrl: 'images/images/HERBAL1.png', description: 'Eldora Herbal Tablet, pack of 30 tablets. Please review the product packaging and consult a qualified health professional before use.' },
+    { id: 'p5', name: 'Eldora Herbal Mixture — 500 ml', price: 15000, imageUrl: 'images/images/eldorareal.jpeg', description: 'Eldora Herbal Mixture, 500 ml. Please review the product packaging and consult a qualified health professional before use.' },
+    { id: 'p6', name: 'Eldora Tumorex natural formula — 2 tablets', price: 35000, imageUrl: 'images/images/tumorex.jpg', description: 'Eldora Tumorex product, pack of 2 tablets. Please review the product packaging and consult a qualified health professional before use.' }
+];
+
+async function ensureProductCatalogInitialized() {
+    const markerRef = db.collection('catalogMeta').doc('defaultProductsInitialized');
+    const productsRef = db.collection('products');
+
+    await db.runTransaction(async (transaction) => {
+        const marker = await transaction.get(markerRef);
+        if (marker.exists) return;
+
+        const existingProducts = await transaction.get(productsRef.limit(1));
+        if (existingProducts.empty) {
+            defaultCatalogProducts.forEach(({ id, ...product }) => {
+                transaction.set(productsRef.doc(id), {
+                    ...product,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            });
+        }
+
+        transaction.set(markerRef, { initializedAt: admin.firestore.FieldValue.serverTimestamp() });
+    });
+}
+
 const mailTransporter = emailConfigured
     ? nodemailer.createTransport({
         host: SMTP_HOST,
@@ -387,6 +418,7 @@ app.get('/api/products', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     try {
+        await ensureProductCatalogInitialized();
         const snapshot = await db.collection('products').orderBy('createdAt', 'asc').get();
         const products = snapshot.docs.map(normalizeDoc);
         return res.status(200).json({ success: true, products });
@@ -399,20 +431,44 @@ app.post('/api/products', async (req, res) => {
     if (!requireDatabase(res)) return;
 
     try {
-        const { name, price } = req.body;
-        if (!name || Number(price) <= 0) {
+        const { name, description, price, imageUrl } = req.body;
+        if (typeof name !== 'string' || !name.trim() || typeof description !== 'string' || !description.trim() || !Number.isFinite(Number(price)) || Number(price) <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid product details.' });
         }
 
         const docRef = await db.collection('products').add({
-            name: String(name).trim(),
+            name: name.trim(),
+            description: description.trim(),
             price: Number(price),
+            imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : '',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         return res.status(200).json({ success: true, id: docRef.id });
     } catch (error) {
         return res.status(500).json({ success: false, message: 'Failed to add product.' });
+    }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+    if (!requireDatabase(res)) return;
+
+    try {
+        const { name, description, price, imageUrl } = req.body;
+        if (typeof name !== 'string' || !name.trim() || typeof description !== 'string' || !description.trim() || !Number.isFinite(Number(price)) || Number(price) <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid product details.' });
+        }
+
+        await db.collection('products').doc(req.params.id).set({
+            name: name.trim(),
+            description: description.trim(),
+            price: Number(price),
+            imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : ''
+        }, { merge: true });
+
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to update product.' });
     }
 });
 

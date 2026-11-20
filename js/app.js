@@ -26,12 +26,12 @@ const defaultContent = {
 
 // Default treatment catalog options
 const defaultProducts = [
-    { id: "p1", name: "Eldora Hormexol hormone booster — 250 ml", price: 18500 },
-    { id: "p2", name: "Eldora Enervate tablets — 30 tablets", price: 25000 },
-    { id: "p3", name: "Eldora Anti Festering Powder — 100 g", price: 45000 },
-    { id: "p4", name: "Eldora Herbal Tablet — 30 tablets", price: 28500 },
-    { id: "p5", name: "Eldora Herbal Mixture — 500 ml", price: 15000 },
-    { id: "p6", name: "Eldora Tumorex natural formula — 2 tablets", price: 35000 }
+    { id: "p1", name: "Eldora Hormexol hormone booster — 250 ml", price: 18500, imageUrl: "images/images/eldora.jpeg", description: "Fertility syrup made with bee pollen, fruits, seeds, and botanical ingredients. 250 ml." },
+    { id: "p2", name: "Eldora Enervate tablets — 30 tablets", price: 25000, imageUrl: "images/images/eldora1.jpeg", description: "Dietary supplement in a pack of 30 tablets. Please consult a qualified health professional before use." },
+    { id: "p3", name: "Eldora Anti Festering Powder — 100 g", price: 45000, imageUrl: "images/images/canvaeldora.png", description: "Powder formulation for wound-care support. 100 g." },
+    { id: "p4", name: "Eldora Herbal Tablet — 30 tablets", price: 28500, imageUrl: "images/images/HERBAL1.png", description: "Herbal dietary supplement in a pack of 30 tablets." },
+    { id: "p5", name: "Eldora Herbal Mixture — 500 ml", price: 15000, imageUrl: "images/images/eldorareal.jpeg", description: "Herbal mixture supplied in a 500 ml bottle." },
+    { id: "p6", name: "Eldora Tumorex natural formula — 2 tablets", price: 35000, imageUrl: "images/images/tumorex.jpg", description: "Natural formula supplied as a dose of 2 tablets. Please consult a qualified health professional before use." }
 ];
 
 // Render backend base URL
@@ -90,6 +90,92 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+function enrichProduct(product) {
+    const name = String(product?.name || '').toLowerCase();
+    let fallback = defaultProducts.find((item) => item.name.toLowerCase() === name);
+    if (!fallback && name.includes('hormexol')) fallback = defaultProducts[0];
+    if (!fallback && name.includes('enervate')) fallback = defaultProducts[1];
+    if (!fallback && name.includes('anti festering')) fallback = defaultProducts[2];
+    if (!fallback && name.includes('herbal tablet')) fallback = defaultProducts[3];
+    if (!fallback && name.includes('herbal mixture')) fallback = defaultProducts[4];
+    if (!fallback && name.includes('tumorex')) fallback = defaultProducts[5];
+
+    return {
+        ...product,
+        description: product.description || fallback?.description || '',
+        imageUrl: product.imageUrl || fallback?.imageUrl || ''
+    };
+}
+
+function renderPublicProducts(products) {
+    const treatmentList = document.getElementById('treatment-product-list');
+    const orderList = document.getElementById('productCheckboxes');
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    if (treatmentList) {
+        treatmentList.innerHTML = safeProducts.length ? safeProducts.map((rawProduct) => {
+            const product = enrichProduct(rawProduct);
+            return `
+                <article class="service-card" style="display:flex;flex-direction:column;gap:0.65rem;">
+                    ${product.imageUrl ? `<img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async">` : '<div style="height:280px;display:grid;place-items:center;background:#f8fafc;border-radius:18px;color:#94a3b8;">Product image unavailable</div>'}
+                    <div style="display:flex;flex-direction:column;gap:0.55rem;">
+                        <h3>${escapeHtml(product.name)}</h3>
+                        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ''}
+                        <strong style="color:#0D7A39;">₦${Number(product.price || 0).toLocaleString()}</strong>
+                    </div>
+                </article>`;
+        }).join('') : '<p style="color:#64748b;">No products are currently available.</p>';
+    }
+
+    if (orderList) {
+        orderList.innerHTML = safeProducts.length ? safeProducts.map((rawProduct, index) => {
+            const product = enrichProduct(rawProduct);
+            return `
+                <article style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0.75rem;align-items:end;padding:0.75rem 0;border-bottom:1px solid #e2e8f0;">
+                    <div style="min-width:0;">
+                        ${product.imageUrl ? `<img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" style="width:100%;height:150px;object-fit:contain;background:#f8fafc;border-radius:8px;margin-bottom:0.6rem;">` : '<div style="height:150px;display:grid;place-items:center;background:#f8fafc;border-radius:8px;color:#94a3b8;margin-bottom:0.6rem;">Add a product image in the admin catalog</div>'}
+                        <strong style="display:block;color:#1e293b;">${escapeHtml(product.name)}</strong>
+                        ${product.description ? `<p style="margin:0.3rem 0;color:#64748b;font-size:0.88rem;">${escapeHtml(product.description)}</p>` : ''}
+                        <span style="color:#0D7A39;font-weight:700;">₦${Number(product.price || 0).toLocaleString()}</span>
+                    </div>
+                    <label style="display:grid;gap:0.25rem;font-size:0.8rem;color:#475569;">Qty
+                        <input type="number" name="${escapeHtml(product.name)}" class="product-qty" data-price="${Number(product.price) || 0}" min="0" step="1" value="0" aria-label="Quantity for ${escapeHtml(product.name)}" style="width:70px;padding:0.45rem;border:1px solid #cbd5e1;border-radius:6px;" oninput="calculateTotal()">
+                    </label>
+                </article>`;
+        }).join('') : '<p style="color:#64748b;">No products are currently available to order.</p>';
+        calculateTotal();
+    }
+}
+
+async function loadPublicProducts() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/products`);
+        if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
+        const result = await response.json();
+        renderPublicProducts(result.success && Array.isArray(result.products) ? result.products : []);
+    } catch (error) {
+        console.error('Could not load live catalog; using the built-in catalog:', error);
+        renderPublicProducts(defaultProducts);
+    }
+}
+
+function calculateTotal() {
+    const inputs = document.querySelectorAll('.product-qty');
+    const total = Array.from(inputs).reduce((sum, input) => {
+        const quantity = Math.max(0, Number.parseInt(input.value, 10) || 0);
+        return sum + quantity * (Number(input.dataset.price) || 0);
+    }, 0);
+    const formattedPrice = `₦${total.toLocaleString()}`;
+
+    window.currentOrderTotal = total;
+    const priceDisplay = document.getElementById('dynamic-price-display');
+    const topPriceDisplay = document.getElementById('order-price');
+    if (priceDisplay) priceDisplay.innerText = `Selected products total: ${formattedPrice}`;
+    if (topPriceDisplay) topPriceDisplay.innerText = `Selected products total: ${formattedPrice}`;
+}
+
+window.calculateTotal = calculateTotal;
 
 // ==========================================
 // 2. PUBLIC VIEW RENDERING
@@ -150,7 +236,9 @@ async function renderPublicPage() {
     if (contactPageImage) contactPageImage.src = content.contactPageImage || defaultContent.contactPageImage;
     if (orderPageTitle) orderPageTitle.innerText = content.orderPageTitle || defaultContent.orderPageTitle;
     if (orderPageDesc) orderPageDesc.innerText = content.orderPageDesc || defaultContent.orderPageDesc;
-    if (orderPagePrice) orderPagePrice.innerText = content.orderPagePrice || defaultContent.orderPagePrice;
+    if (orderPagePrice && !document.getElementById('productCheckboxes')) {
+        orderPagePrice.innerText = content.orderPagePrice || defaultContent.orderPagePrice;
+    }
     if (orderPageNote) orderPageNote.innerText = content.orderPageNote || defaultContent.orderPageNote;
 
     const feedbackContainer = document.getElementById('pub-feedback-container');
@@ -505,7 +593,7 @@ async function submitClientFeedback(event) {
 
         // Refresh public feedback if function exists
         if (typeof renderPublicPage === 'function') {
-            renderPublicPage();
+            void renderPublicPage();
         }
 
     } catch (error) {
@@ -555,17 +643,19 @@ function payWithPaystack() {
         return;
     }
 
-    // 4. Check for selected quantities from the number input fields
+    // 4. Check for selected quantities from the dynamically loaded catalog
     const qtyInputs = document.querySelectorAll('.product-qty');
     let selectedProductsList = [];
     let totalQuantity = 0;
+    let checkoutAmount = 0;
 
     qtyInputs.forEach(input => {
-        let qty = parseInt(input.value) || 0;
+        const qty = Math.max(0, Number.parseInt(input.value, 10) || 0);
         if (qty > 0) {
-            let productName = input.getAttribute('name') || input.previousElementSibling?.textContent || 'Product';
+            const productName = input.getAttribute('name') || 'Product';
             selectedProductsList.push(`${productName} (Qty: ${qty})`);
             totalQuantity += qty;
+            checkoutAmount += qty * (Number(input.dataset.price) || 0);
         }
     });
 
@@ -575,8 +665,8 @@ function payWithPaystack() {
     }
 
     // 5. Calculate total and format product names for backend
-    let checkoutAmount = window.currentOrderTotal || 0;
     let selectedProductName = selectedProductsList.join(', ');
+    window.currentOrderTotal = checkoutAmount;
 
     // 6. Send to backend
     fetch(`${API_BASE_URL}/api/initialize-payment`, {
@@ -699,8 +789,10 @@ function initChatbot() {
 // 8. APP BOOTSTRAP INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    renderPublicPage();
+    void renderPublicPage();
     populateProducts(); // Loads products dynamically inside form selector context on load
+    void loadPublicProducts();
+    calculateTotal();
     initNavigation();
     initChatbot();
 });

@@ -71,37 +71,7 @@
                 <!-- QUANTITY PRODUCT SELECTOR -->
                 <label class="field-label">Select product(s) and quantities</label>
                 <div id="productCheckboxes" style="margin-bottom: 1rem; border: 1px solid #ccc; padding: 1rem; border-radius: 8px; background: #fff;">
-                    
-                    <div style="margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Hormexol (₦18,500)</label>
-                        <input type="number" name="Hormexol" class="product-qty" data-price="18500" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
-                    <div style="margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Enervate (₦25,000)</label>
-                        <input type="number" name="Enervate" class="product-qty" data-price="25000" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
-                    <div style="margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Anti Festering (₦45,000)</label>
-                        <input type="number" name="AntiFestering" class="product-qty" data-price="45000" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
-                    <div style="margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Herbal Tablet (₦28,500)</label>
-                        <input type="number" name="HerbalTablet" class="product-qty" data-price="28500" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
-                    <div style="margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Herbal Mixture (₦15,000)</label>
-                        <input type="number" name="HerbalMixture" class="product-qty" data-price="15000" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
-                    <div style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
-                        <label>Eldora Tumorex (₦35,000)</label>
-                        <input type="number" name="Tumorex" class="product-qty" data-price="35000" min="0" value="0" style="width: 60px;" oninput="calculateTotal()">
-                    </div>
-
+                    <p style="color:#64748b;">Loading products...</p>
                 </div>
 
                 <!-- Live Selected Price Indicator -->
@@ -111,8 +81,6 @@
 
                 <div style="color: #D32F2F; font-weight: bold; font-style: italic; font-size: 0.9rem; margin-bottom: 1.5rem;">
                     *Please note: Delivery fees are not included in the total above. Kindly contact Natureline Support for delivery options and applicable charges.
-                </div>
-                
                 </div>
                 
                 <label class="field-label" for="order-notes">Order notes (optional)</label>
@@ -155,31 +123,5 @@
     <script src="js/app.js"></script>
     <script src="js/security.js"></script>
 
-    <!-- Script to calculate multiple product quantities -->
-    <script>
-        window.currentOrderTotal = 0; 
-
-        function calculateTotal() {
-            const inputs = document.querySelectorAll('.product-qty');
-            const priceDisplay = document.getElementById('dynamic-price-display');
-            const topPriceDisplay = document.getElementById('order-price');
-            let total = 0;
-            
-            inputs.forEach(input => {
-                let qty = parseInt(input.value) || 0;
-                if (qty > 0) {
-                    total += qty * parseFloat(input.getAttribute('data-price'));
-                }
-            });
-
-            window.currentOrderTotal = total;
-            const formattedPrice = '₦' + total.toLocaleString();
-            
-            priceDisplay.innerText = 'Selected products total: ' + formattedPrice;
-            topPriceDisplay.innerText = 'Selected products total: ' + formattedPrice;
-        }
-
-        document.addEventListener('DOMContentLoaded', calculateTotal);
-    </script>
 </body>
 </html>

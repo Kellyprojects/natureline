@@ -22,7 +22,7 @@ async function processLogin() {
             if (errorBox) errorBox.style.display = 'none';
             if (loginBox) loginBox.style.display = 'none';
             if (dashboard) dashboard.style.display = 'block';
-            loadAdminContent();
+            await loadAdminContent();
             return;
         }
     } catch (error) {
@@ -31,7 +31,7 @@ async function processLogin() {
             if (errorBox) errorBox.style.display = 'none';
             if (loginBox) loginBox.style.display = 'none';
             if (dashboard) dashboard.style.display = 'block';
-            loadAdminContent();
+            await loadAdminContent();
             return;
         }
     }
@@ -105,9 +105,7 @@ async function loadAdminContent() {
         console.error('Could not fetch page layout from Firebase:', error);
     }
 
-    renderAdminFeedbackQueue();
-    renderAdminProducts();
-    renderAdminOrders();
+    await Promise.all([renderAdminFeedbackQueue(), renderAdminProducts(), renderAdminOrders()]);
 }
 
 async function savePageContent() {
@@ -205,7 +203,8 @@ function escapeAdminHtml(value) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 async function reviewFeedback(id, action) {
@@ -220,7 +219,7 @@ async function reviewFeedback(id, action) {
             alert(result.message || 'Could not update feedback.');
             return;
         }
-        renderAdminFeedbackQueue();
+        await renderAdminFeedbackQueue();
     } catch (error) {
         alert('Could not review feedback. Is the server running?');
     }
@@ -234,23 +233,42 @@ async function renderAdminProducts() {
         const response = await fetch(`${API_BASE_URL}/api/products`);
         const result = await response.json();
         const products = result.products || [];
+        window.adminProducts = products;
 
         if (products.length === 0) {
             container.innerHTML = '<p class="text-slate-400 italic">No products in catalog.</p>';
             return;
         }
 
-        container.innerHTML = products.map((product) => `
-            <div class="flex justify-between items-center p-2 bg-slate-50 border rounded-lg" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;margin-bottom:0.4rem;border:1px solid #e2e8f0;border-radius:10px;">
-                <div>
-                    <p style="font-weight:700;margin:0;">${product.name}</p>
-                    <p style="color:#64748b;margin:0.2rem 0 0;">₦${Number(product.price).toLocaleString()}</p>
+        container.innerHTML = products.map((product, index) => `
+            <section data-product-index="${index}" style="padding:0.75rem;margin-bottom:0.75rem;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
+                ${product.imageUrl ? `<img src="${escapeAdminHtml(product.imageUrl)}" alt="${escapeAdminHtml(product.name)}" style="width:100%;height:150px;object-fit:contain;background:#f8fafc;border-radius:8px;margin-bottom:0.6rem;">` : '<div style="height:90px;display:grid;place-items:center;background:#f8fafc;border-radius:8px;color:#94a3b8;margin-bottom:0.6rem;">No product image</div>'}
+                <label style="display:block;margin-bottom:0.45rem;">Name
+                    <input data-field="name" type="text" value="${escapeAdminHtml(product.name)}" class="w-full text-xs border p-2 rounded bg-white">
+                </label>
+                <label style="display:block;margin-bottom:0.45rem;">Description
+                    <textarea data-field="description" rows="3" class="w-full text-xs border p-2 rounded bg-white">${escapeAdminHtml(product.description)}</textarea>
+                </label>
+                <label style="display:block;margin-bottom:0.45rem;">Price (NGN)
+                    <input data-field="price" type="number" min="1" value="${Number(product.price) || ''}" class="w-full text-xs border p-2 rounded bg-white">
+                </label>
+                <label style="display:block;margin-bottom:0.45rem;">Change image
+                    <input data-field="image" type="file" accept="image/*" class="w-full text-xs border p-1 rounded bg-white">
+                </label>
+                ${product.imageUrl ? '<label style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.6rem;"><input data-field="remove-image" type="checkbox"> Remove current image</label>' : ''}
+                <div style="display:flex;gap:0.5rem;">
+                    <button type="button" data-action="save" data-index="${index}" class="btn-primary" style="flex:1;">Save changes</button>
+                    <button type="button" data-action="delete" data-index="${index}" class="btn-secondary" style="color:#b91c1c;">Remove product</button>
                 </div>
-                <button onclick="deleteProduct('${product.id}')" style="color:#dc2626;font-weight:700;border:0;background:transparent;cursor:pointer;">
-                    Delete
-                </button>
-            </div>
+            </section>
         `).join('');
+
+        container.querySelectorAll('[data-action="save"]').forEach((button) => {
+            button.addEventListener('click', () => saveProduct(Number(button.dataset.index)));
+        });
+        container.querySelectorAll('[data-action="delete"]').forEach((button) => {
+            button.addEventListener('click', () => deleteProduct(window.adminProducts[Number(button.dataset.index)].id));
+        });
     } catch (error) {
         container.innerHTML = '<p style="color:red;">Could not load products.</p>';
     }
@@ -258,20 +276,24 @@ async function renderAdminProducts() {
 
 async function addNewProduct() {
     const nameInput = document.getElementById('admin-prod-name');
+    const descriptionInput = document.getElementById('admin-prod-description');
     const priceInput = document.getElementById('admin-prod-price');
+    const imageInput = document.getElementById('admin-prod-image');
     const name = nameInput.value.trim();
+    const description = descriptionInput.value.trim();
     const price = Number(priceInput.value);
 
-    if (!name || Number.isNaN(price) || price <= 0) {
-        alert('Please fill out a valid product name and positive price.');
+    if (!name || !description || !Number.isFinite(price) || price <= 0) {
+        alert('Please enter a product name, description, and positive price.');
         return;
     }
 
     try {
+        const imageUrl = imageInput.files[0] ? await uploadProductImage(imageInput.files[0]) : '';
         const response = await fetch(`${API_BASE_URL}/api/products`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, price })
+            body: JSON.stringify({ name, description, price, imageUrl })
         });
         const result = await response.json();
 
@@ -281,10 +303,62 @@ async function addNewProduct() {
         }
 
         nameInput.value = '';
+        descriptionInput.value = '';
         priceInput.value = '';
-        renderAdminProducts();
+        imageInput.value = '';
+        await renderAdminProducts();
     } catch (error) {
-        alert('Could not add product. Is the server running?');
+        alert(error.message || 'Could not add product. Is the server running?');
+    }
+}
+
+async function uploadProductImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch(`${API_BASE_URL}/api/upload-image`, { method: 'POST', body: formData });
+    const result = await response.json();
+    if (!response.ok || !result.success || !result.url) {
+        throw new Error(result.message || 'Could not upload the product image.');
+    }
+    return result.url;
+}
+
+async function saveProduct(index) {
+    const product = window.adminProducts?.[index];
+    const row = document.querySelector(`[data-product-index="${index}"]`);
+    if (!product || !row) return;
+
+    const name = row.querySelector('[data-field="name"]').value.trim();
+    const description = row.querySelector('[data-field="description"]').value.trim();
+    const price = Number(row.querySelector('[data-field="price"]').value);
+    const imageFile = row.querySelector('[data-field="image"]').files[0];
+    const removeImage = row.querySelector('[data-field="remove-image"]')?.checked || false;
+
+    if (!name || !description || !Number.isFinite(price) || price <= 0) {
+        alert('Please enter a product name, description, and positive price.');
+        return;
+    }
+
+    try {
+        let imageUrl = product.imageUrl || '';
+        if (imageFile) {
+            imageUrl = await uploadProductImage(imageFile);
+        } else if (removeImage) {
+            imageUrl = '';
+        }
+        const response = await fetch(`${API_BASE_URL}/api/products/${encodeURIComponent(product.id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description, price, imageUrl })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            alert(result.message || 'Failed to update product.');
+            return;
+        }
+        await renderAdminProducts();
+    } catch (error) {
+        alert(error.message || 'Could not update product. Is the server running?');
     }
 }
 
@@ -300,7 +374,7 @@ async function deleteProduct(id) {
             return;
         }
 
-        renderAdminProducts();
+        await renderAdminProducts();
     } catch (error) {
         alert('Could not delete product. Is the server running?');
     }
@@ -359,8 +433,8 @@ async function markOrderCompleted(reference) {
     if (!confirm("Are you sure you want to mark this order as completed?")) return;
 
     try {
-        const response = classFetchWithFallback = `${API_BASE_URL}/api/orders/${encodeURIComponent(reference)}/status`;
-        const responseObj = await fetch(response, {
+        const endpoint = `${API_BASE_URL}/api/orders/${encodeURIComponent(reference)}/status`;
+        const responseObj = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'completed' })
@@ -368,7 +442,7 @@ async function markOrderCompleted(reference) {
         const result = await responseObj.json();
 
         if (result.success) {
-            renderAdminOrders();
+            await renderAdminOrders();
         } else {
             alert(result.message || 'Failed to update order status.');
         }
@@ -377,113 +451,11 @@ async function markOrderCompleted(reference) {
     }
 }
 
-// ==========================================
-// DYNAMIC PRODUCT CATALOG MANAGEMENT
-// ==========================================
-
-async function loadAdminProducts() {
-    const listContainer = document.getElementById('admin-product-list');
-    if (!listContainer) return;
-    
-    listContainer.innerHTML = '<em>Loading catalog...</em>';
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/products`);
-        const data = await response.json();
-
-        if (data.success && data.products && data.products.length > 0) {
-            listContainer.innerHTML = data.products.map(product => `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #334155;">${escapeAdminHtml(product.name)} — ₦${Number(product.price).toLocaleString()}</span>
-                    <button onclick="deleteProduct('${product.id}')" style="background: #b91c1c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete</button>
-                </div>
-            `).join('');
-        } else {
-            listContainer.innerHTML = '<p style="color: #64748b;">No products currently in the catalog.</p>';
-        }
-    } catch (error) {
-        console.error("Failed to load products:", error);
-        listContainer.innerHTML = '<p style="color: #b91c1c;">Failed to load catalog.</p>';
-    }
-}
-
-async function addNewProduct() {
-    const nameInput = document.getElementById('admin-prod-name');
-    const priceInput = document.getElementById('admin-prod-price');
-    
-    const name = nameInput.value.trim();
-    const price = Number(priceInput.value);
-
-    if (!name || price <= 0) {
-        alert("Please enter a valid product name and price.");
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/products`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, price })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            nameInput.value = '';
-            priceInput.value = '';
-            loadAdminProducts();
-            alert("Product added successfully!");
-        } else {
-            alert(data.message || "Failed to add product.");
-        }
-    } catch (error) {
-        console.error("Error adding product:", error);
-        alert("Network error. Could not communicate with database.");
-    }
-}
-
-async function deleteProduct(productId) {
-    if (!confirm("Are you sure you want to delete this product from the catalog?")) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
-            method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            loadAdminProducts();
-        } else {
-            alert(data.message || "Failed to delete product.");
-        }
-    } catch (error) {
-        console.error("Error deleting product:", error);
-        alert("Network error. Could not delete product.");
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const dashboard = document.getElementById('dashboard-container');
-    if (dashboard) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.target.style.display !== 'none') {
-                    loadAdminProducts();
-                    renderAdminOrders();
-                }
-            });
-        });
-        observer.observe(dashboard, { attributes: true, attributeFilter: ['style'] });
-    }
-});
-
 window.processLogin = processLogin;
 window.logoutAdmin = logoutAdmin;
 window.savePageContent = savePageContent;
 window.addNewProduct = addNewProduct;
+window.saveProduct = saveProduct;
 window.deleteProduct = deleteProduct;
 window.reviewFeedback = reviewFeedback;
 window.markOrderCompleted = markOrderCompleted;
